@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- moveit components -->
+  <include file="$(find ur5_environment_moveit_config)/launch/moveit_planning_execution.launch">
+    <arg name="sim" value="true"/>
+  </include>
+
+  <!-- grasp  service  -->
+  <node pkg="pick_and_place" type="grasp_service" name="gripper_server" output="screen"/>
+
+  <!-- static frame publisher for pick target -->
+  <node pkg="tf" type="static_transform_publisher" name="world_to_tag" args="-0.8 0.2 0.17 0 0 0 world_frame ar_tag 1"/>
+
+  <!-- rviz -->
+  <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="false" 
+        args="-d $(find pick_and_place)/config/ur5/rviz_config.rviz" output="screen">
+    <rosparam command="load" file="$(find ur5_environment_moveit_config)/config/kinematics.yaml"/>
+  </node>
+
+</launch>

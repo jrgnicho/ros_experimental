@@ -1,0 +1,4 @@
+int32 GRASP=1
+int32 PREGRASP=2
+int32 RELEASE=3
+int32 action

@@ -1,0 +1,5 @@
+# request
+GraspCommand grasp_goal
+---
+#response
+GraspCommand grasp_result

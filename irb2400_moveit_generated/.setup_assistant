@@ -1,0 +1,8 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: urdf_example
+    relative_path: urdf/irb2400_navigation_environment.urdf
+  SRDF:
+    relative_path: config/irb2400_navigation_environment.srdf
+  CONFIG:
+    generated_timestamp: 1373554499

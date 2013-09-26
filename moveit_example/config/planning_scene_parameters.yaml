@@ -1,0 +1,36 @@
+collision_object_info:
+  id: collision_obj
+  frame_id: /world_frame
+  link_name: "" # not used
+  shape_type: 1 # box 
+  size:
+    x: 0.08
+    y: 0.08
+    z: 0.20
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.10
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+attached_object_info:
+  id: attached_obj
+  frame_id: gripper_palm
+  link_name: gripper_palm 
+  shape_type: 1 # box 
+  size:
+    x: 0.08
+    y: 0.08
+    z: 0.08
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.02
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0

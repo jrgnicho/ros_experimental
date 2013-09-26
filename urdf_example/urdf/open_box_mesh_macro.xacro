@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+	<description>
+		Creates a window of specified dimensions using boxes
+	</description>
+
+	<include filename="$(find urdf_example)/urdf/color_pallet_macro.xacro"/>
+
+	<!-- macro list -->
+	<xacro:macro name="window_link_component" params="name parent_link length width depth px py *viz_material *col_material">
+		<link name="${name}">
+			<visual>
+				<origin xyz="${px} ${py} 0" rpy="0 0 0"/>
+				<geometry>
+					<box size="${length} ${width} ${depth}"/>
+				</geometry>
+				<xacro:insert_block name="viz_material"/>
+				<!--xacro:material_blue_block prefix="${name}"/-->
+			</visual>
+			<collision>
+				<origin xyz="${px} ${py} 0" rpy="0 0 0"/>
+				<geometry>
+					<box size="${length} ${width} ${depth}"/>
+				</geometry>
+				<xacro:insert_block name="col_material"/>
+				<!--xacro:material_red_block prefix="${name}"/-->
+			</collision>
+		</link>
+		<joint name="${parent_link}_to_${name}" type="fixed">
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<parent link="${parent_link}"/>
+			<child link="${name}"/>
+		</joint>
+	</xacro:macro>
+	<xacro:macro name="window_links" params="prefix w l t d *viz_material *col_material">
+
+		<!-- declaring parent link -->
+		<link name="${prefix}_parent_frame"/>
+
+		<!-- instantiating links -->
+		<xacro:window_link_component name="${prefix}_top_link" parent_link="${prefix}_parent_frame" length="${l + 2*t}" width="${t}" depth="${d}"
+			px="0" py="${(w+t)*0.5}">
+			<xacro:insert_block name="viz_material"/>
+			<xacro:insert_block name="col_material"/>
+		</xacro:window_link_component>
+
+		<xacro:window_link_component name="${prefix}_bottom_link" parent_link="${prefix}_parent_frame" length="${l + 2*t}" width="${t}" depth="${d}"
+			px="0" py="${(w+t)*-0.5}">
+			<xacro:insert_block name="viz_material"/>
+			<xacro:insert_block name="col_material"/>
+		</xacro:window_link_component>
+
+		<xacro:window_link_component name="${prefix}_left_link" parent_link="${prefix}_parent_frame" length="${t}" width="${w}" depth="${d}"
+			px="${(l+t)*-0.5}" py="0">
+			<xacro:insert_block name="viz_material"/>
+			<xacro:insert_block name="col_material"/>
+		</xacro:window_link_component>
+
+		<xacro:window_link_component name="${prefix}_right_link" parent_link="${prefix}_parent_frame" length="${t}" width="${w}" depth="${d}"
+			px="${(l+t)*0.5}" py="0">
+			<xacro:insert_block name="viz_material"/>
+			<xacro:insert_block name="col_material"/>
+		</xacro:window_link_component>
+
+	</xacro:macro>
+</robot>

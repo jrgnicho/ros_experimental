@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <description> Needs to launch the planning scene setup first as follows:
+		roslaunch moveit_example planning_scene_setup.launch
+ </description>
+  <node name="planning_scene_test" pkg="moveit_example" type="planning_scene_publisher" output="screen">
+	<rosparam command="load" file="$(find moveit_example)/config/planning_scene_parameters.yaml"/>
+	<param name="arm_group" value="manipulator"/>
+	<param name="tcp_link" value="gripper_palm"/>
+  </node>
+</launch>

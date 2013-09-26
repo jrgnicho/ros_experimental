@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+	<description>
+		Contains a series of material blocks with predefined colors that can be used
+		in any visual element of a urdf model.
+	</description>
+
+	<!-- material template block -->
+	<xacro:macro name="material_template_block" params="name rgb_vals">
+		<material name="${name}">
+			<color rgba="${rgb_vals} 1"/>
+		</material>
+	</xacro:macro>
+
+	<!-- material block list -->
+	<xacro:macro name="material_blue_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_blue_material"  rgb_vals="0 0 1"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_yellow_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_yellow_material"  rgb_vals="1 1 0"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_green_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_green_material"  rgb_vals="0 1 0"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_white_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_white_material"  rgb_vals="1 1 1"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_red_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_red_material"  rgb_vals="1 0 0"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_light_blue_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_light_blue_material"  rgb_vals="0.78 0.94 0.965"/>
+	</xacro:macro>
+
+	<xacro:macro name="material_gray_block" params="prefix">
+		<xacro:material_template_block name="${prefix}_gray_material"  rgb_vals="0.8 0.8 0.8"/>
+	</xacro:macro>
+ 
+</robot>

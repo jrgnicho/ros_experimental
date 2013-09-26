@@ -1,0 +1,36 @@
+<package>
+  <name>moveit_manipulation_example</name>
+  <version>1.0.0</version>
+  <description>metapackage for a pick and place application using moveit</description>
+
+  <maintainer email="ros_user@gmail.com">ROS User</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki</url>
+  <author email="ros_user@gmail.com">ROS User</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!--build_depend>moveit_msgs</build_depend-->
+  <!--build_depend>moveit_ros_manipulation</build_depend-->
+  <!--build_depend>moveit_ros_move_group</build_depend-->
+  <!--build_depend>moveit_ros_planning_interface</build_depend-->
+  <!--build_depend>roscpp</build_depend-->
+  <!--build_depend>object_manipulation_msgs</build_depend-->
+  <!--build_depend>actionlib</build_depend-->
+  <!--build_depend>industrial_robot_client</build_depend-->
+  <!--build_depend>industrial_robot_simulator</build_depend-->
+
+  <run_depend>moveit_msgs</run_depend>
+  <run_depend>moveit_ros_manipulation</run_depend>
+  <run_depend>moveit_ros_move_group</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
+  <run_depend>roscpp</run_depend>
+  <!--run_depend>object_manipulation_msgs</run_depend-->
+  <run_depend>actionlib</run_depend>
+  <run_depend>industrial_robot_client</run_depend>
+  <run_depend>industrial_robot_simulator</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
