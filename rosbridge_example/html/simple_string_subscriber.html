@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" type="text/javascript">
+	// Connecting to ROS
+	// -----------------
+	var ros = new ROSLIB.Ros({url : 'ws://localhost:9090'});
+	
+	// Subscribing to topic
+	// ------------------
+	var listener = new ROSLIB.Topic({
+		ros :ros,
+		name: '/string_msg',
+		messageType : 'std_msgs/String'
+	});
+	
+	console.log('Created ros subscriber');
+	
+	listener.subscribe(function(message){
+		console.log('Received messaged ' + message.data);
+	});
+	
+	window.onbeforeunload = function(e)
+	{		
+		listener.unsubscribe();
+		console.log('Unsubscribed to topic');
+	};
+</script>
+
+
+</head>
+<body>
+	<h1>Simple String Subscriber</h1>
+	<p>Check console for output</p>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Simple Marker Viewer</title>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+
+<body>
+	<h1>Simple marker viewer</h1>
+	<div id="markers"></div><!-- Id needs to match id used by ROS3D.Viewer below.  Also it must be created before the viewer -->
+</body>
+
+<script type="text/javascript" type="text/javascript">
+		
+	// Connect to ROS
+	var ros = new ROSLIB.Ros({url : 'ws://localhost:9090'});
+	
+	// Create the main viewer
+	var viewer = new ROS3D.Viewer({
+		divID: 'markers',
+		width: 800,
+		height: 600,
+		antialias : true		
+	});
+	
+	// TF listner
+	var tf_client = new ROSLIB.TFClient({
+		ros:ros,
+		angularThres : 0.01,
+		transThres :0.01,
+		rate : 10.0,
+		fixedFrame : '/world_frame'		
+	});
+	
+	// Marker Client
+	var marker_client = new ROS3D.MarkerClient({
+		ros:ros,
+		tfClient : tf_client,
+		topic : '/marker_msg',
+		rootObject : viewer.scene	
+	});
+	
+	//console.log('Viewer Ready');
+	
+</script>
+</head>
+</html>
