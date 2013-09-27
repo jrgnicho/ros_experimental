@@ -7,8 +7,9 @@ import math
 from visualization_msgs.msg import Marker
 from bzrlib import transform
 
-RADIUS = 0.5
-Z_RADIUS = 0.2
+RADIUS = 0.2
+REV_RADIUS = 1.4
+Z_REV_RADIUS = 0.6
 FRAME_ID = "/sphere_frame"
 WORLD_FRAME_ID = "/world_frame"
 
@@ -32,9 +33,9 @@ if __name__ == '__main__':
     marker_msg.header.frame_id = FRAME_ID
     marker_msg.type = marker_msg.SPHERE
     marker_msg.action = Marker.ADD
-    marker_msg.scale.x = 0.1
-    marker_msg.scale.y = 0.1
-    marker_msg.scale.z = 0.1
+    marker_msg.scale.x = RADIUS
+    marker_msg.scale.y = RADIUS
+    marker_msg.scale.z = RADIUS
     marker_msg.color.a = 1.0
     marker_msg.color.r = 1.0
     marker_msg.color.g = 1.0
@@ -63,9 +64,9 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         
         rospy.sleep(0.1)
-        t.transform.translation.x = math.cos(alpha) * RADIUS
-        t.transform.translation.y = math.sin(alpha) * RADIUS
-        t.transform.translation.z = math.sin(phi) * Z_RADIUS 
+        t.transform.translation.x = math.cos(alpha) * REV_RADIUS
+        t.transform.translation.y = math.sin(alpha) * REV_RADIUS
+        t.transform.translation.z = math.sin(phi) * Z_REV_RADIUS 
         
         t.header.stamp = rospy.Time.now()        
         tf_broadcaster.sendTransform(t)

@@ -35,6 +35,15 @@
 		fixedFrame : '/world_frame'		
 	});
 	
+	
+	// Add Grid	
+	viewer.addObject(new ROS3D.Grid({
+		size: 20,
+		color : '#cccccc',
+		lineWidth : 0.1		
+	}))
+	
+	
 	// Marker Client
 	var marker_client = new ROS3D.MarkerClient({
 		ros:ros,
@@ -43,7 +52,7 @@
 		rootObject : viewer.scene	
 	});
 	
-	//console.log('Viewer Ready');
+	console.log('Viewer Ready');
 	
 </script>
 </head>
