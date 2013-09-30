@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="use_pr2" value="False"/>
+
+	<group if="$(arg use_pr2)">
+		<include file="$(find pr2_description)/robots/upload_pr2.launch"/>
+	</group>
+
+	<group unless="$(arg use_pr2)">
+		<arg name="model" default="$(find ur_description)/urdf/ur5_robot.urdf.xacro"/>
+		<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
+
+		<!--arg name="model" default="$(find urdf_tutorial)/01-myfirst.urdf"/>
+		<param name="robot_description" textfile="$(arg model)"/-->
+	</group>
+	
+	<param name="use_gui" value="True"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/>
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>		
+</launch>

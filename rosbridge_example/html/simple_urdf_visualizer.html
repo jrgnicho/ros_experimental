@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body onload="init()">
+	<h1>Simple Urdf Visualizer</h1>
+	<div id="urdf"></div>
+</body>
+<script src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+<script type="text/javascript">
+
+	// setup
+	function init(){
+		var ros = new ROSLIB.Ros({
+			url : 'ws://localhost:9090'
+		});	
+		
+		// viewer
+		var viewer = new ROS3D.Viewer({
+			divID : 'urdf',
+			width : 800,
+			height: 600,
+			antialias : true 
+		})
+		
+		// grid
+		viewer.addObject(new ROS3D.Grid({
+			size : 20,
+			color : '#cccccc',
+			lineWidth : 1
+		}));
+		
+		// tf listener
+		var tf_client = new ROSLIB.TFClient({
+			ros : ros,
+			angularThres : 0.01,
+			transThres : 0.01,
+			rate : 10.0
+		});
+		
+		var urdf_client = new ROS3D.UrdfClient({
+			ros : ros,
+			tfClient : tf_client,
+			//path : 'http://resources.robotwebtools.org/',
+			//path : 'http://172.16.0.167/',
+			path : 'http://localhost/',
+			rootObject : viewer.scene		
+		});
+	
+	}	
+</script>
+</html>
