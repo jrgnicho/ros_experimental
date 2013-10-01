@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="use_pr2" value="False"/>
+	<description>
+		After running this launch file opent the "simple_urdf_visualizer.html" document from a webbrowser in order to
+		show the urdf model
+	</description>
+
+	<arg name="use_pr2" default="False"/>
 
 	<group if="$(arg use_pr2)">
 		<include file="$(find pr2_description)/robots/upload_pr2.launch"/>
@@ -9,9 +14,6 @@
 	<group unless="$(arg use_pr2)">
 		<arg name="model" default="$(find ur_description)/urdf/ur5_robot.urdf.xacro"/>
 		<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
-
-		<!--arg name="model" default="$(find urdf_tutorial)/01-myfirst.urdf"/>
-		<param name="robot_description" textfile="$(arg model)"/-->
 	</group>
 	
 	<param name="use_gui" value="True"/>

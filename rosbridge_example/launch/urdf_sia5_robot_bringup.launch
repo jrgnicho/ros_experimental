@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+	<description>
+		After running this launch file opent the "simple_urdf_visualizer.html" document from a webbrowser in order to
+		show the urdf model
+	</description>
+	<group>
+		<arg name="model" default="$(find motoman_config)/cfg/sia5.xacro"/>
+		<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
+	</group>
+	
+	<param name="use_gui" value="True"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/>
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>		
+</launch>
