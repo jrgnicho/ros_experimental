@@ -17,6 +17,20 @@
 	</group>
 	
 	<param name="use_gui" value="True"/>
+
+	<!--rosparam param="source_list">[robot_states, external_states]</rosparam>
+	<node name="robot_joint_publisher" pkg="rostopic" type="rostopic" args="pub /robot_joints sensor_msgs/JointState '
+		{
+		header:
+		 {seq: 0,
+		  stamp: {secs: 0, nsecs: 0},
+		  frame_id: ''},
+		name: ['j1'],
+		position: [0],
+		velocity: [0],
+		effort: [0]}' -r 0.5"/-->
+
+
 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/>

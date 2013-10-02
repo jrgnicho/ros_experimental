@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Slider Demo</title>
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<!--  link rel="stylesheet" href="/resources/demos/style.css" /-->
+	<style>
+		.right
+		{
+			position:absolute;
+			right:0px;
+			width:300px;
+			background-color:#b0e0e6;
+		}
+	</style>
+</head>
+<style>
+	.right
+	{
+		position:absolute;
+		width:3000px;
+		background-color:#b0e0e6;
+	}
+</style>
+<body onload="init()">
+	<h1>Sliders</h1>
+	<div id="sliders"></div>
+</body>
+<script>
+	function init()
+	{
+		var num_widgets = 6;
+		var top_obj = $("body")
+		for(var i = 0; i < num_widgets;i++)
+		{
+			var element_name = 'slider' + i;
+			var element_obj = 	document.createElement('div');
+			var element_text = document.createTextNode("joint " + i+1);			
+			element_obj.setAttribute('id',element_name);
+			element_obj.appendChild(element_text);
+			//element_obj.style.height = "500px";
+			element_obj.style.width = "50%";
+			element_obj.style.margin = "20px";
+			sl = $(element_obj).slider(
+					{
+						range: false,
+						min:0,
+						max:200,
+						value: 50,
+						animate:true,
+						orientation: "horizontal",
+						width: "100%",
+						margin:"40px"
+					});
+			$("body").append(element_obj);
+			//$("body").append(sl);
+			$("body").append("<div style='clear:both'></div>");// vertical layout
+			//$(top_obj).after([element_obj]);
+			//$top_obj = element_obj;
+		}
+	}
+</script>
+</html>

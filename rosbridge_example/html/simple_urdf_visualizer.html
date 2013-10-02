@@ -53,6 +53,23 @@
 			path : 'http://localhost/robots/',
 			rootObject : viewer.scene		
 		});
+		
+		// joint listener
+		var joint_state_subs = new ROSLIB.Topic({
+			ros: ros,
+			name : '/joint_states',
+			messageType : 'sensor_msgs/JointState'
+		});
+		
+		joint_state_subs.subscribe(function(msg)
+		{
+			buffer = "";
+			for (var i = 0;i < msg.name.length;i++)
+			{
+				buffer = buffer + msg.name[i] + "\n";
+			}
+			console.log(buffer);
+		});
 	
 	}	
 </script>
