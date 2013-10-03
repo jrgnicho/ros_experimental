@@ -6,7 +6,6 @@
 	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-	<!--  link rel="stylesheet" href="/resources/demos/style.css" /-->
 	<style>
 		.right
 		{
@@ -17,14 +16,6 @@
 		}
 	</style>
 </head>
-<style>
-	.right
-	{
-		position:absolute;
-		width:3000px;
-		background-color:#b0e0e6;
-	}
-</style>
 <body onload="init()">
 	<h1>Sliders</h1>
 	<div id="sliders"></div>
@@ -32,34 +23,77 @@
 <script>
 	function init()
 	{
-		var num_widgets = 6;
-		var top_obj = $("body")
+		var num_widgets = 8;
 		for(var i = 0; i < num_widgets;i++)
+		{	
+			// create element
+			var element_id = 'slider' + i;
+			var element_label = "Joint " + i;
+			generate_slider_widget(element_id,element_label);
+		}
+	}
+	
+	function generate_slider_widget(element_id,label)// i: index
+	{
+		// create element
+		var element_obj = 	document.createElement('div');
+		element_obj.setAttribute('id',element_id);
+		
+		// create input
+		var element_input = document.createElement('input');
+		element_input.setAttribute('type','text');
+		element_input.setAttribute('id',element_id + '_input');
+		element_input.setAttribute('style','border: 1; color: #f6931f; font-weight: bold;');
+		
+		// create label
+		var element_label = document.createElement('label');
+		element_label.appendChild(document.createTextNode(label + ":\t"));
+		element_label.setAttribute('for',element_input.id);
+		
+		// create paragraph for label and input
+		var p = document.createElement('p');
+		
+		
+		// add label and input		
+		//element_obj.appendChild(element_label);			
+		$(p).append(element_label);
+		$(p).append(element_input);
+		$(element_obj).append(p);
+
+		// add slider
+		element_slider = document.createElement('div');
+		//element_slider.setAttribute('id','s' + i);
+		
+		
+		sl = $(element_slider).slider(
+				{
+					range: false,
+					min:-180,
+					max:180,
+					value: 50,
+					animate:true,
+					orientation: "horizontal",
+					width: "100%",
+					margin:"100px",
+					slide: generate_slider_handler(element_input)
+				});
+		$(element_input).val($(element_slider).slider("value"));
+		$(element_obj).append(element_slider);
+		
+		// setting style
+		element_obj.style.width = "50%";
+		element_obj.style.margin = "10px";	
+
+		// add element to body			
+		$("body").append(element_obj);
+		$("body").append("<div style='clear:both'></div>");// vertical layout
+	}
+	
+	function generate_slider_handler(element_input)
+	{
+		return function(event,ui)
 		{
-			var element_name = 'slider' + i;
-			var element_obj = 	document.createElement('div');
-			var element_text = document.createTextNode("joint " + i+1);			
-			element_obj.setAttribute('id',element_name);
-			element_obj.appendChild(element_text);
-			//element_obj.style.height = "500px";
-			element_obj.style.width = "50%";
-			element_obj.style.margin = "20px";
-			sl = $(element_obj).slider(
-					{
-						range: false,
-						min:0,
-						max:200,
-						value: 50,
-						animate:true,
-						orientation: "horizontal",
-						width: "100%",
-						margin:"40px"
-					});
-			$("body").append(element_obj);
-			//$("body").append(sl);
-			$("body").append("<div style='clear:both'></div>");// vertical layout
-			//$(top_obj).after([element_obj]);
-			//$top_obj = element_obj;
+			$(element_input).val(ui.value);
 		}
 	}
 </script>
