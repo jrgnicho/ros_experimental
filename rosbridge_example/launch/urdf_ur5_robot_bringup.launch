@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 	<description>
-		After running this launch file opent the "simple_urdf_visualizer.html" document from a webbrowser in order to
+		After running this launch file open the "simple_urdf_visualizer.html" document from a webbrowser in order to
 		show the urdf model
 	</description>
 

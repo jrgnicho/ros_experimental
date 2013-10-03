@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Simple Urdf Controller</title>
+</head>
+<body onload="init()">
+	<h1 style="text-align:center;">Simple Urdf Controller</h1>
+	<div class="ui-grid-a">
+		<div style="float:left" id="urdf"></div>
+		<div style="float:left" id="controller">
+			<h1 style="text-align:center;">Robot Joints</h1>
+		</div>
+	</div>
+</body>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+<script type="text/javascript">
+
+	// setup
+	function init()
+	{
+		var ros = new ROSLIB.Ros({
+			url : 'ws://localhost:9090'
+		});	
+		
+		// viewer
+		var viewer = new ROS3D.Viewer({
+			divID : 'urdf',
+			width : 800,
+			height: 600,
+			antialias : true 
+		})
+		
+		// grid
+		viewer.addObject(new ROS3D.Grid({
+			size : 20,
+			color : '#cccccc',
+			lineWidth : 1
+		}));
+		
+		// tf listener
+		var tf_client = new ROSLIB.TFClient({
+			ros : ros,
+			angularThres : 0.01,
+			transThres : 0.01,
+			rate : 10.0
+		});
+		
+		var urdf_client = new ROS3D.UrdfClient({
+			ros : ros,
+			tfClient : tf_client,
+			//path : 'http://resources.robotwebtools.org/',
+			//path : 'http://172.16.0.167/',
+			path : 'http://localhost/robots/',
+			rootObject : viewer.scene		
+		});
+		
+		// joint publisher
+		var joint_state_pub = new ROSLIB.Topic(
+		{
+			ros: ros,
+			name: '/rosbridge_joint_states',
+			messageType: 'sensor_msgs/JointState'
+		});
+		
+		// placeholder for joint state msg
+		var js_msg;
+		
+		// joint listener
+		var joint_state_subs = new ROSLIB.Topic({
+			ros: ros,
+			name : '/joint_states',
+			messageType : 'sensor_msgs/JointState'
+		});
+		
+		joint_state_subs.subscribe(function(msg)
+		{
+			joint_state_pub.publish(msg);
+			js_msg = msg;
+			buffer = "";
+			for (var i = 0;i < msg.name.length;i++)
+			{
+				generate_slider_widget('jslider' + i,msg.name[i],i);
+				buffer = buffer + msg.name[i] + "\n";
+			}
+			joint_state_subs.unsubscribe();
+			console.log(buffer);
+		});	
+		
+		function generate_slider_widget(element_id,label,joint_index)// i: index
+		{
+			// create element
+			var element_obj = 	document.createElement('div');
+			element_obj.setAttribute('id',element_id);
+			
+			// create input
+			var element_input = document.createElement('input');
+			element_input.setAttribute('type','text');
+			element_input.setAttribute('disabled',true);
+			element_input.setAttribute('readOnly',true);
+			element_input.setAttribute('id',element_id + '_input');
+			element_input.setAttribute('style','border: 1; color: #f6931f; font-weight: bold; width: 60px;');
+			element_input.setAttribute('joint_index',joint_index);
+			
+			// create label
+			var element_label = document.createElement('label');
+			element_label.appendChild(document.createTextNode(label + ":\t"));
+			element_label.setAttribute('for',element_input.id);
+			
+			// create paragraph for label and input
+			var p = document.createElement('p');
+			
+			
+			// add label and input		
+			//element_obj.appendChild(element_label);			
+			$(p).append(element_label);
+			$(p).append(element_input);
+			$(element_obj).append(p);
+
+			// add slider
+			element_slider = document.createElement('div');
+			
+			
+			sl = $(element_slider).slider(
+					{
+						range: false,
+						min:-180,
+						max:180,
+						value: (js_msg.position[joint_index]*180.0)/Math.PI,
+						animate:true,
+						orientation: "horizontal",
+						//width: "100%",
+						//margin:"100px",
+						slide: generate_slider_handler(element_input)
+					});
+			$(element_input).val($(element_slider).slider("value"));
+			$(element_obj).append(element_slider);
+			
+			// setting style
+			element_obj.style.width = "100%";
+			element_obj.style.margin = "20px";	
+
+			// add element to body			
+			$("#controller").append(element_obj);
+			//$("#controller").append("<div style='clear:both'></div>");// vertical layout
+		}
+		
+		function generate_slider_handler(element_input)
+		{
+			return function(event,ui)
+			{
+				//console.log("value: " + ui.value*Math.PI/180.0 + ", index: " + element_input.getAttribute('joint_index'));
+				// set joint value in msg
+				 js_msg.position[element_input.getAttribute('joint_index')] = ui.value*Math.PI/180.0;
+				 
+				 // publish
+				 joint_state_pub.publish(js_msg);
+				
+				 // update input
+				$(element_input).val(ui.value);
+			}
+		}		
+		
+	}
+
+</script>
+</html>
