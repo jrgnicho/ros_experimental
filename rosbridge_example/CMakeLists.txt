@@ -94,6 +94,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 	install(PROGRAMS
 		src/scripts/marker_publisher.py
+		src/scripts/image_publisher.py
 		DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ## Mark executables and/or libraries for installation
