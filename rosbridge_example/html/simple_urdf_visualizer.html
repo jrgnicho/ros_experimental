@@ -19,7 +19,7 @@
 	// setup
 	function init(){
 		var ros = new ROSLIB.Ros({
-			url : 'ws://localhost:9090'
+			url : 'ws://ubuntu.wireless.dyn.datasys.swri.edu:9090'
 		});	
 		
 		// viewer
@@ -48,9 +48,7 @@
 		var urdf_client = new ROS3D.UrdfClient({
 			ros : ros,
 			tfClient : tf_client,
-			//path : 'http://resources.robotwebtools.org/',
-			//path : 'http://172.16.0.167/',
-			path : 'http://localhost/robots/',
+			path : 'http://ubuntu.wireless.dyn.datasys.swri.edu/resources/robots/',
 			rootObject : viewer.scene		
 		});
 		
