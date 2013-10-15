@@ -3,38 +3,83 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Insert title here</title>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-<script type="text/javascript" type="text/javascript">
-	// Connecting to ROS
-	// -----------------
-	var ros = new ROSLIB.Ros({url : 'ws://localhost:9090'});
-	
-	// Subscribing to topic
-	// ------------------
-	var listener = new ROSLIB.Topic({
-		ros :ros,
-		name: '/string_msg',
-		messageType : 'std_msgs/String'
-	});
-	
-	console.log('Created ros subscriber');
-	
-	listener.subscribe(function(message){
-		console.log('Received messaged ' + message.data);
-	});
-	
-	window.onbeforeunload = function(e)
-	{		
-		listener.unsubscribe();
-		console.log('Unsubscribed to topic');
-	};
-</script>
-
-
 </head>
-<body>
+<body onload="init_ros()">
 	<h1>Simple String Subscriber</h1>
 	<p>Check console for output</p>
 </body>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" type="text/javascript">
+	function init_ros()
+	{
+		// Connecting to ROS
+		// -----------------
+		var ros = new ROSLIB.Ros({url : 'ws://ubuntu.wireless.dyn.datasys.swri.edu:9090'});
+		
+		// subprocess publisher
+		var subproc_args_msg = new ROSLIB.Message(
+		{
+			data : 'roslaunch rosbridge_example launch_file.launch'
+		});
+		
+		var subproc_args_pub = new ROSLIB.Topic(
+		{
+			ros : ros,
+			name : '/subprocess_arguments',
+			messageType: 'std_msgs/String'
+		});
+		
+		// subprocess state subscriber
+		var subproc_running = false;
+		var subproc_st_subs = new ROS.Topic(
+		{
+			ros : ros,
+			name : '/subprocess_status',
+			messageType : 'std_msgs/Bool'
+		});
+		
+		subproc_st_subs.subscribe(function(bool_msg)
+		{
+			subproc_running = bool_msg.data
+		});
+		
+		// waiting for subprocess
+		while (subproc_running == false)
+		{
+			subproc_args_pub.publish(subproc_args_msg);
+			console.log("Waiting for process");
+		}
+		
+		// run demo
+		subproc_st_subs.unsubscribe();		
+		run_demo();
+	}		
+	function run_demo()
+	{
+		// Connecting to ROS
+		// -----------------
+		var ros = new ROSLIB.Ros({url : 'ws://ubuntu.wireless.dyn.datasys.swri.edu:9090'});
+		
+		// Subscribing to topic
+		// ------------------
+		var listener = new ROSLIB.Topic({
+			ros :ros,
+			name: '/string_msg',
+			messageType : 'std_msgs/String'
+		});
+		
+		console.log('Created ros subscriber');
+		
+		listener.subscribe(function(message){
+			console.log('Received messaged ' + message.data);
+		});
+		
+		window.onbeforeunload = function(e)
+		{		
+			listener.unsubscribe();
+			console.log('Unsubscribed to topic');
+		};
+	}
+</script>
 </html>
