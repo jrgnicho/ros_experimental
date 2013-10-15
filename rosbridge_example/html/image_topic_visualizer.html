@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Image Stream Visualizer</title>
+</head>
+<body onload="init()">
+	<h1>Image Topic Visualizer</h1>
+	<div id="image_visualizer" style="text-align: center;"></div>
+</body>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
+<script type="text/javascript">
+
+	function init()
+	{
+		var viewer = new MJPEGCANVAS.Viewer({
+			divID : 'image_visualizer',
+			host : 'ubuntu.wireless.dyn.datasys.swri.edu',
+			width : 640,
+			height: 480,
+			topic : '/image_topic'
+		});
+	}
+</script>
+</html>
