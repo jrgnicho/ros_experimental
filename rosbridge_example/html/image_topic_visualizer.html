@@ -4,15 +4,75 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Image Stream Visualizer</title>
 </head>
-<body onload="init()">
+<body onload="init_ros_subprocess()">
 	<h1>Image Topic Visualizer</h1>
 	<div id="image_visualizer" style="text-align: center;"></div>
 </body>
+
+<div id="subprocess-data" data-args="roslaunch rosbridge_example publish_image.launch"></div>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" type="text/javascript">
+	function init_ros_subprocess()
+	{
+		// Connecting to ROS
+		// -----------------
+		var ros = new ROSLIB.Ros({url : 'ws://ubuntu.wireless.dyn.datasys.swri.edu:9090'});
+		
+		// subprocess publisher		
+		var subproc_args_pub = new ROSLIB.Topic(
+		{
+			ros : ros,
+			name : '/subprocess_arguments',
+			messageType: 'std_msgs/String'
+		});
+		
+		// subprocess state subscriber
+		var subproc_running = false;
+		var subproc_st_subs = new ROSLIB.Topic(
+		{
+			ros : ros,
+			name : '/subprocess_status',
+			messageType : 'std_msgs/Bool'
+		});
+				
+	 	// subscribing to status topic
+		subproc_st_subs.subscribe(function(bool_msg)
+		{
+			subproc_running = bool_msg.data
+			
+			// run demo
+			if (subproc_running == true)
+			{
+				subproc_st_subs.unsubscribe();
+				console.log("Subprocess running; starting demo");
+				run_demo();
+			}
+		});	 	
+
+	 	// publishing message
+	 	subproc_args = $('#subprocess-data').data("args");
+		console.log("subprocess arguments: " + subproc_args);		
+		var subproc_args_msg = new ROSLIB.Message(
+		{
+			data : subproc_args
+		});
+	 	subproc_args_pub.publish(subproc_args_msg);
+		
+		function sleep(ms)
+		{
+			var dt = new Date();
+			dt.setTime(dt.getTime() + ms);
+			while (new Date().getTime() < dt.getTime());
+		};
+	}	
+</script>
 <script type="text/javascript">
 
-	function init()
+	function run_demo()
 	{
 		var viewer = new MJPEGCANVAS.Viewer({
 			divID : 'image_visualizer',
