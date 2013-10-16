@@ -48,11 +48,15 @@ class SubprocessLauncher:
         
         rospy.loginfo("Started subprocess: " + ' '.join(self.subproc_args_))        
         
-    def stop_subprocess(self):        
+    def stop_subprocess(self):  
+        
+        if(self.subproc_ == None):
+            return  
         
         self.subproc_state_msg_.data = False
         self.subproc_.terminate()
         self.subproc_.wait()
+        self.subproc_ = None
         
         rospy.loginfo("Stopped subprocess")
         return
@@ -74,11 +78,10 @@ class SubprocessLauncher:
             
     def subs_callback(self,msg):
         
-        if msg.data == NO_SUBPROCESS:
-            
-            self.stop_subprocess()
-            
-        else:
+        # stop current process
+        self.stop_subprocess()
+        
+        if msg.data != NO_SUBPROCESS:
             
             self.subproc_args_ = msg.data.split()
             self.start_subprocess()       
