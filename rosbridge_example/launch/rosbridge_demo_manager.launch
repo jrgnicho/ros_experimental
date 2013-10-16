@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+	<description>
+	</description>
+	<node name="rosbridge_process_launcher" type="rosbridge_process_launcher.py" pkg="rosbridge_example" output="screen"/>
+	<node name="mjpeg_server" type="mjpeg_server" pkg="mjpeg_server" args="_port:=8080"/>
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+		<arg name="port" value="9090"/>
+	</include>
+</launch>
