@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- <node name="string_publisher" pkg="rostopic" type="rostopic" args="pub /string_msg std_msgs/String '{data: message}' -r 0.5"/> -->
+	<remap from="/md5_hash" to="/string_msg"/>
+	<node name="md5_hash_string_publisher" type="md5_hash_string_publisher.py" pkg="rosbridge_example"/>
+</launch>

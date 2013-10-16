@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node name="string_publisher" pkg="rostopic" type="rostopic" args="pub /string_msg std_msgs/String '{data: message}' -r 0.5"/>
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
-</launch>

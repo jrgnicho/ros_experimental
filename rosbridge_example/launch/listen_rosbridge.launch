@@ -4,5 +4,5 @@
 		After running this launch file open the simple_twist_publisher.html file in the html directory with a web browser
 	</description>
 	<node name="listen_rosbridge" pkg="rostopic" type="rostopic" args="echo /cmd_vel" output="screen"/>
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+	<!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/> -->
 </launch>

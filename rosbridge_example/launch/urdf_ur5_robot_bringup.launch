@@ -6,6 +6,7 @@
 	</description>
 
 	<arg name="use_pr2" default="False"/>
+	<arg name="static_joints" default="True"/>
 
 	<group if="$(arg use_pr2)">
 		<include file="$(find pr2_description)/robots/upload_pr2.launch"/>
@@ -16,23 +17,23 @@
 		<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
 	</group>
 	
-	<param name="use_gui" value="True"/>
+	<param name="use_gui" value="False"/>
 
-	<!--rosparam param="source_list">[robot_states, external_states]</rosparam>
-	<node name="robot_joint_publisher" pkg="rostopic" type="rostopic" args="pub /robot_joints sensor_msgs/JointState '
+	<rosparam param="source_list">[robot_joints, rosbridge_joint_states]</rosparam>
+	<node if="$(arg static_joints)" name="robot_joint_publisher" pkg="rostopic" type="rostopic" args="pub /robot_joints sensor_msgs/JointState '
 		{
 		header:
 		 {seq: 0,
 		  stamp: {secs: 0, nsecs: 0},
 		  frame_id: ''},
-		name: ['j1'],
-		position: [0],
-		velocity: [0],
-		effort: [0]}' -r 0.5"/-->
+		name: ['shoulder_pan_joint', 'shoulder_lift_joint','elbow_joint','wrist_1_joint','wrist_2_joint','wrist_3_joint'],
+		position: [0,-0.7,0.5,0,0.5,0],
+		velocity: [0,0,0,0,0,0],
+		effort: [0,0,0,0,0,0]}' -r 0.5"/>
+"
 
 
 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />	
 	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/>
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>		
 </launch>
