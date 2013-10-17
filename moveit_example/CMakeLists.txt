@@ -4,7 +4,8 @@ project(moveit_example)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS moveit_core moveit_core moveit_msgs moveit_ros_move_group moveit_ros_planning roscpp rospy sensor_msgs urdf moveit_ros_planning_interface)
+find_package(catkin REQUIRED COMPONENTS moveit_core moveit_core moveit_msgs moveit_ros_move_group moveit_ros_planning 
+	roscpp rospy sensor_msgs urdf moveit_ros_planning_interface tf_conversions)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -73,6 +74,9 @@ include_directories(include
 # add_executable(moveit_example_node src/moveit_example_node.cpp)
 add_executable(planning_scene_publisher src/planning_scene_publisher.cpp)
 target_link_libraries(planning_scene_publisher ${catkin_LIBRARIES})
+
+add_executable(moveit_cartesian_jogger src/moveit_cartesian_jogger.cpp)
+target_link_libraries(moveit_cartesian_jogger ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
