@@ -5,4 +5,4 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/irb2400_navigation_environment.srdf
   CONFIG:
-    generated_timestamp: 1373554499
+    generated_timestamp: 1382036200
