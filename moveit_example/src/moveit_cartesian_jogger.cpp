@@ -94,9 +94,7 @@ namespace cartesian_jogger
 		bool setup()
 		{
 			// ros setup
-			ros::NodeHandle nh("~");
-
-
+			ros::NodeHandle nh;
 
 			// publisher
 			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::JOINT_STATES,1);
