@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <description> Needs to launch the planning scene setup first as follows:
+		roslaunch moveit_example planning_scene_setup.launch
+ </description>
+  <node name="moveit_cartesian_jogger" pkg="moveit_example" type="moveit_cartesian_jogger" output="screen">
+	<param name="arm_group" value="manipulator"/>
+	<param name="tcp_link" value="gripper_palm"/>
+  </node>
+</launch>
