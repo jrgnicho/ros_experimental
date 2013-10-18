@@ -71,7 +71,6 @@ include_directories(include
 # )
 
 ## Declare a cpp executable
-# add_executable(moveit_example_node src/moveit_example_node.cpp)
 add_executable(planning_scene_publisher src/planning_scene_publisher.cpp)
 target_link_libraries(planning_scene_publisher ${catkin_LIBRARIES})
 
