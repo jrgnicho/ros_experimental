@@ -5,7 +5,7 @@
        xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
        xmlns:xacro="http://ros.org/wiki/xacro">
 
-<include filename="$(find ur5_description)/urdf/arm.transmission.xacro" />
+<xacro:include filename="$(find ur_description)/urdf/ur5.transmission.xacro" />
 
 <!--
 DH for UR5:
@@ -66,7 +66,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}base_link" >
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Base.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Base.dae" />
       </geometry>
       <origin xyz="0.0 0.0 0.003" rpy="0.0 0.0 ${3.0 * pi / 4.0}" />
     </visual>
@@ -88,7 +88,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}shoulder_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Shoulder.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Shoulder.dae" />
       </geometry>
     </visual>
     <collision>
@@ -116,7 +116,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}upper_arm_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/UpperArm.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/UpperArm.dae" />
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
     </visual>
@@ -145,7 +145,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}forearm_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Forearm.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Forearm.dae" />
       </geometry>
     </visual>
     <collision>
@@ -173,7 +173,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}wrist_1_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Wrist1.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Wrist1.dae" />
       </geometry>
       <origin xyz="0.0 ${wrist_1_length} 0.0" rpy="0.0 ${pi / 2.0} 0.0" />
     </visual>
@@ -202,7 +202,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}wrist_2_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Wrist2.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Wrist2.dae" />
       </geometry>
       <origin xyz="0.0 0.0 ${wrist_2_length}" rpy="0.0 0.0 0.0" />
     </visual>
@@ -231,7 +231,7 @@ center_of_mass = [ [0, -0.02561, 0.00193], [0.2125, 0, 0.11336], [0.11993, 0.0, 
   <link name="${prefix}wrist_3_link">
     <visual>
       <geometry>
-        <mesh filename="package://ur5_description/meshes/Wrist3.dae" />
+        <mesh filename="package://ur_description/meshes/ur5/Wrist3.dae" />
       </geometry>
     </visual>
     <collision>
