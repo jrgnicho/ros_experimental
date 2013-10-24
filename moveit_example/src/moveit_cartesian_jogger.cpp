@@ -44,7 +44,8 @@ namespace cartesian_jogger
 
 	namespace topics
 	{
-		static const std::string JOINT_STATES = "robot_joint_states";
+		static const std::string CURRENT_JOINT_STATES = "joint_states";
+		static const std::string NEW_JOINT_STATES = "robot_joint_states";
 		static const std::string TCP_DELTA_TRANSFORM = "tcp_delta_transform";
 	}
 
@@ -80,10 +81,11 @@ namespace cartesian_jogger
 			}
 
 			ROS_INFO_STREAM("Started node");
-			ros::Duration loop_duration(0.2);
+			ros::Duration loop_duration(0.2f);
 			while(ros::ok())
 			{
 				loop_duration.sleep();
+				ros::spinOnce();
 			}
 
 			return;
@@ -93,20 +95,59 @@ namespace cartesian_jogger
 
 		bool setup()
 		{
+			if(fetch_parameters())
+			{
+				ROS_INFO_STREAM("\nparameters\n"<<"arm group name: "<<arm_group_name_
+						<<"\ntcp link name: "<<tcp_link_name_);
+			}
+			else
+			{
+				ROS_ERROR_STREAM("parameters not found during setup");
+				return false;
+			}
+
 			// ros setup
 			ros::NodeHandle nh;
 
 			// publisher
-			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::JOINT_STATES,1);
+			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::NEW_JOINT_STATES,1);
 
 			// subscriber
 			transform_subs_ = nh.subscribe(topics::TCP_DELTA_TRANSFORM,1,&CartesianJogger::transform_subs_callback,this);
 
 			// moveit setup
 			kinematic_model_ptr_ = robot_model_loader::RobotModelLoader(parameters::ROBOT_DESCRIPTION).getModel();
-			kinematic_state_ptr_ = moveit::core::RobotStatePtr(new robot_state::RobotState(kinematic_model_ptr_));
+			kinematic_state_ptr_.reset(new robot_state::RobotState(kinematic_model_ptr_));
+			ROS_INFO_STREAM("Robot frame: "<<kinematic_model_ptr_->getModelFrame());
 
-			return fetch_parameters();
+			// joint group names
+			const std::vector<std::string> &group_names = kinematic_model_ptr_->getJointModelGroupNames();
+			std::stringstream ss;
+			for(std::vector<std::string>::const_iterator i = group_names.begin(); i < group_names.end();i++)
+			{
+				ss<<*i<<" ";
+			}
+			ss<<"]";
+			ROS_INFO_STREAM("Group Names: "<<ss.str());
+
+			// joint model group
+			const robot_state::JointModelGroup* joint_model_group = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
+			const std::vector<std::string> &joint_names = joint_model_group->getActiveJointModelNames();
+			ss.str("[");
+			for(std::vector<std::string>::const_iterator i = joint_names.begin(); i < joint_names.end();i++)
+			{
+				ss<<*i<<" ";
+			}
+			ss<<"]";
+			ROS_INFO_STREAM("Joint Names: "<<ss.str());
+
+			// group info
+			joint_model_group->printGroupInfo();
+
+			ROS_INFO_STREAM("Set State from IK allowed: "<<joint_model_group->canSetStateFromIK(tcp_link_name_) ? "Yes": "No");
+
+			return true;
+
 		}
 
 		bool fetch_parameters()
@@ -119,35 +160,61 @@ namespace cartesian_jogger
 
 		void transform_subs_callback(geometry_msgs::TransformStampedConstPtr tf_msg)
 		{
-			if(compute_ik(*tf_msg.get(),joint_states_msg_))
+			sensor_msgs::JointStateConstPtr current_js_ptr = ros::topic::waitForMessage<sensor_msgs::JointState>(
+					topics::CURRENT_JOINT_STATES);
+
+			if(compute_ik(*tf_msg.get(),*current_js_ptr.get(),joint_states_msg_))
 			{
 				joint_state_pub_.publish(joint_states_msg_);
+			}
+			else
+			{
+				ROS_WARN_STREAM("ik solution not found");
 			}
 
 		}
 
-		bool compute_ik(const geometry_msgs::TransformStamped &delta_tf_msg,sensor_msgs::JointState &js)
+		bool compute_ik(const geometry_msgs::TransformStamped &delta_tf_msg,
+				const sensor_msgs::JointState& current_js,sensor_msgs::JointState &js)
 		{
+			ROS_INFO_STREAM("In compute_ik");
+
 			// converting msg
+			ROS_INFO_STREAM("converting transform msg");
 			tf::Transform delta_tf;
 			Eigen::Affine3d delta_tf_aff;
 			tf::transformMsgToTF(delta_tf_msg.transform,delta_tf);
 			tf::transformTFToEigen(delta_tf,delta_tf_aff);
 
+			ROS_INFO_STREAM("retrieving joint group");
+			const moveit::core::JointModelGroup* joint_model_group_ptr = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
+
+			// set current joint values
+			ROS_INFO_STREAM("setting current joint values");
+			kinematic_state_ptr_->setToDefaultValues();
+			kinematic_state_ptr_->setJointGroupPositions(joint_model_group_ptr,current_js.position);
+
 			// applying transform
+			ROS_INFO_STREAM("applying transform");
 			const Eigen::Affine3d &tcp_tf = kinematic_state_ptr_->getGlobalLinkTransform(tcp_link_name_);
 			Eigen::Affine3d goal_tcp_tf = tcp_tf*delta_tf_aff;
 
+			// print tcp desired pose
+			ROS_INFO_STREAM("tcp position: \n"<<goal_tcp_tf.translation());
+			ROS_INFO_STREAM("tcp orientation: \n"<<goal_tcp_tf.rotation());
+
 			// solving ik
-			const moveit::core::JointModelGroup* joint_model_group_ptr = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
+			ROS_INFO_STREAM("Calling ik");
 			bool found = kinematic_state_ptr_->setFromIK(joint_model_group_ptr,
-					goal_tcp_tf,
+					goal_tcp_tf,tcp_link_name_,
 					constants::IK_SOLVER_ATTEMTPTS,
 					constants::IK_SOLVER_TIMEOUT);
 
 			// populating joint message
 			if(found)
 			{
+				ROS_INFO_STREAM("construction joint state message");
+
 				const std::vector<std::string> &jn = joint_model_group_ptr->getActiveJointModelNames();
 				js.name.assign(jn.begin(),jn.end());
 				js.position.clear();
@@ -156,6 +223,8 @@ namespace cartesian_jogger
 				js.velocity.assign(js.position.size(),0.0f);
 				js.effort.assign(js.position.size(),0.0f);
 			}
+
+			ROS_INFO_STREAM("IK solution "<<found ? "found" : "not found");
 
 			return found;
 		}
@@ -186,8 +255,13 @@ int main(int argc,char** argv)
 {
 	using namespace cartesian_jogger;
 	ros::init(argc,argv,"moveit_cartesian_jogger");
+	ros::AsyncSpinner spinner(1);
+	spinner.start();
+
 	CartesianJogger c = CartesianJogger();
 	c.run();
+
+	spinner.stop();
 
 	return 0;
 }
