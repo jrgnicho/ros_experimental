@@ -50,6 +50,9 @@ class JogGui(Frame):
         # transform
         t = geometry_msgs.msg.TransformStamped()
         t.header.frame_id = WORLD_FRAME
+        t.transform.translation.x = 0
+        t.transform.translation.y = 0
+        t.transform.translation.z = 0
         t.transform.rotation.x = 0
         t.transform.rotation.y = 0
         t.transform.rotation.z = 0
@@ -102,7 +105,10 @@ class JogGui(Frame):
         
         return
     
-    def publish_msg(self):        
+    def publish_msg(self):    
+        
+        if (rospy.is_shutdown()):
+            self.tk_root_.quit()
         
         self.tf_stamped_publisher_.publish(self.transform_msg_)
         self.after(400, self.publish_msg)
