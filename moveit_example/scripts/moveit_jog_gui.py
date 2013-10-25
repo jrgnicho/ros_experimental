@@ -18,9 +18,9 @@ LEFT_ARROW_IMG_PATH = RESOURCES_PATH + "/left_blue.gif"
 RIGHT_ARROW_IMG_PATH = RESOURCES_PATH + "/right_blue.gif"
 
 # displacement constants
-DELTA_X = 0.01 #meters
-DELTA_Y = 0.01 #meters
-DELTA_Z = 0.01 #meters
+DELTA_X = 0.02 #meters
+DELTA_Y = 0.02 #meters
+DELTA_Z = 0.02 #meters
 
 # topics
 TRANSFORM_STAMPED_TOPIC = "tcp_delta_transform"
@@ -57,8 +57,12 @@ class JogGui(Frame):
         t.transform.rotation.y = 0
         t.transform.rotation.z = 0
         t.transform.rotation.w = 1
-        self.transform_msg_ = t        
+        self.transform_msg_ = t
         
+        self.publish_new_transform_ = False        
+        
+    def enable_transform_publish(self,bool):
+        self.publish_new_transform_ = bool
         
     def create_layout(self):
         
@@ -70,8 +74,9 @@ class JogGui(Frame):
         self.y_pos_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[0])
         #self.y_pos_button_ = Button(self.x_y_frame_,text='/\\')
         #self.y_pos_button_.configure(command = lambda arg = DELTA_Y: self.apply_translation(0, arg, 0))
-        self.y_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_Y: self.apply_translation(0, arg, 0))
-        self.y_pos_button_.bind("<ButtonRelease-1>", lambda event,arg = 0.0: self.apply_translation(0, arg, 0))
+        self.y_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_Y:(self.enable_transform_publish(True),
+                                                                         self.apply_translation(0, arg, 0)))
+        self.y_pos_button_.bind("<ButtonRelease-1>", lambda event: self.enable_transform_publish(False))
         self.y_pos_button_.grid(row = 0,column = 1)
         
         # down button
@@ -79,8 +84,9 @@ class JogGui(Frame):
         self.y_neg_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[1])
         #self.y_neg_button_ = Button(self.x_y_frame_,text='\\/')
         #self.y_neg_button_.configure(command = lambda arg = -DELTA_Y: self.apply_translation(0, arg, 0))
-        self.y_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_Y: self.apply_translation(0, arg, 0))
-        self.y_neg_button_.bind("<ButtonRelease-1>", lambda event,arg = 0.0: self.apply_translation(0, arg, 0))
+        self.y_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_Y: (self.enable_transform_publish(True),
+                                                                           self.apply_translation(0, arg, 0)))
+        self.y_neg_button_.bind("<ButtonRelease-1>", lambda event: self.enable_transform_publish(False))
         self.y_neg_button_.grid(row = 2,column = 1)
         
         # left button
@@ -88,8 +94,9 @@ class JogGui(Frame):
         self.x_neg_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[2])
         #self.x_neg_button_ = Button(self.x_y_frame_,text='<')
         #self.x_neg_button_.configure(command = lambda arg = -DELTA_X: self.apply_translation(arg, 0 , 0))
-        self.x_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_X: self.apply_translation(arg, 0 , 0))
-        self.x_neg_button_.bind("<ButtonRelease-1>", lambda event,arg = 0.0: self.apply_translation(arg, 0 , 0))
+        self.x_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_X: (self.enable_transform_publish(True),
+                                                                           self.apply_translation(arg, 0 , 0)))
+        self.x_neg_button_.bind("<ButtonRelease-1>", lambda event: self.enable_transform_publish(False))
         self.x_neg_button_.grid(row = 1 ,column = 0)
         
         # right button
@@ -97,8 +104,9 @@ class JogGui(Frame):
         self.x_pos_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[3])
         #self.x_pos_button_ = Button(self.x_y_frame_,text='>')
         #self.x_pos_button_.configure(command = lambda arg = DELTA_X: self.apply_translation(arg, 0 , 0))
-        self.x_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_X: self.apply_translation(arg, 0 , 0))
-        self.x_pos_button_.bind("<ButtonRelease-1>", lambda event,arg = 0.0: self.apply_translation(arg, 0 , 0))
+        self.x_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_X: (self.enable_transform_publish(True),
+                                                                          self.apply_translation(arg, 0 , 0)))
+        self.x_pos_button_.bind("<ButtonRelease-1>", lambda event: self.enable_transform_publish(False))
         self.x_pos_button_.grid(row = 1 ,column = 2)
         
         self.x_y_frame_.pack(side=TOP)
@@ -110,8 +118,10 @@ class JogGui(Frame):
         if (rospy.is_shutdown()):
             self.tk_root_.quit()
         
-        self.tf_stamped_publisher_.publish(self.transform_msg_)
-        self.after(400, self.publish_msg)
+        if(self.publish_new_transform_):
+            self.tf_stamped_publisher_.publish(self.transform_msg_)
+            
+        self.after(100, self.publish_msg)
         
     
     def apply_translation(self,dx = 0,dy=0,dz = 0):
