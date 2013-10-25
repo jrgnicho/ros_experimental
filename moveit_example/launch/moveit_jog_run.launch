@@ -6,7 +6,7 @@
 
   <node name="moveit_cartesian_jogger" pkg="moveit_example" type="moveit_cartesian_jogger" output="screen">
 	<param name="arm_group" value="manipulator"/>
-	<param name="tcp_link" value="tool0"/>
+	<param name="tcp_link" value="gripper_palm"/>
 	<rosparam command="load" file="$(find irb2400_moveit_generated)/config/kinematics.yaml"/>
   </node>
 
