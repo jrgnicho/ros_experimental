@@ -81,7 +81,7 @@ namespace cartesian_jogger
 			}
 
 			ROS_INFO_STREAM("Started node");
-			ros::Duration loop_duration(0.2f);
+			ros::Duration loop_duration(0.1f);
 			while(ros::ok())
 			{
 				loop_duration.sleep();
@@ -109,20 +109,17 @@ namespace cartesian_jogger
 			// ros setup
 			ros::NodeHandle nh;
 
-			// publisher
-			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::NEW_JOINT_STATES,1);
-
-			// subscriber
-			transform_subs_ = nh.subscribe(topics::TCP_DELTA_TRANSFORM,1,&CartesianJogger::transform_subs_callback,this);
-
 			// moveit setup
-			kinematic_model_ptr_ = robot_model_loader::RobotModelLoader(parameters::ROBOT_DESCRIPTION).getModel();
+			robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(parameters::ROBOT_DESCRIPTION,true));
+			kinematic_model_ptr_  = robot_model_loader_->getModel();
 			kinematic_state_ptr_.reset(new robot_state::RobotState(kinematic_model_ptr_));
+			kinematic_state_ptr_->setToDefaultValues();
 			ROS_INFO_STREAM("Robot frame: "<<kinematic_model_ptr_->getModelFrame());
 
 			// joint group names
 			const std::vector<std::string> &group_names = kinematic_model_ptr_->getJointModelGroupNames();
 			std::stringstream ss;
+			ss<<":\t[";
 			for(std::vector<std::string>::const_iterator i = group_names.begin(); i < group_names.end();i++)
 			{
 				ss<<*i<<" ";
@@ -133,7 +130,8 @@ namespace cartesian_jogger
 			// joint model group
 			const robot_state::JointModelGroup* joint_model_group = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
 			const std::vector<std::string> &joint_names = joint_model_group->getActiveJointModelNames();
-			ss.str("[");
+			ss.str("");
+			ss<<":\t[";
 			for(std::vector<std::string>::const_iterator i = joint_names.begin(); i < joint_names.end();i++)
 			{
 				ss<<*i<<" ";
@@ -141,10 +139,19 @@ namespace cartesian_jogger
 			ss<<"]";
 			ROS_INFO_STREAM("Joint Names: "<<ss.str());
 
+			// general model info
+			kinematic_state_ptr_->printStateInfo(std::cout);
+
 			// group info
 			joint_model_group->printGroupInfo();
 
 			ROS_INFO_STREAM("Set State from IK allowed: "<<joint_model_group->canSetStateFromIK(tcp_link_name_) ? "Yes": "No");
+
+			// publisher
+			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::NEW_JOINT_STATES,1);
+
+			// subscriber
+			transform_subs_ = nh.subscribe(topics::TCP_DELTA_TRANSFORM,1,&CartesianJogger::transform_subs_callback,this);
 
 			return true;
 
@@ -191,7 +198,7 @@ namespace cartesian_jogger
 
 			// set current joint values
 			ROS_INFO_STREAM("setting current joint values");
-			kinematic_state_ptr_->setToDefaultValues();
+			//kinematic_state_ptr_->setToDefaultValues();
 			kinematic_state_ptr_->setJointGroupPositions(joint_model_group_ptr,current_js.position);
 
 			// applying transform
@@ -236,6 +243,7 @@ namespace cartesian_jogger
 		std::string tcp_link_name_;
 
 		// moveit
+		robot_model_loader::RobotModelLoaderPtr robot_model_loader_; // needs to be kept in scope in order to prevent the ik solver from getting unloaded
 		moveit::core::RobotModelPtr kinematic_model_ptr_;
 		moveit::core::RobotStatePtr kinematic_state_ptr_;
 
