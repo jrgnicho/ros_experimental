@@ -77,6 +77,9 @@ target_link_libraries(planning_scene_publisher ${catkin_LIBRARIES})
 add_executable(moveit_cartesian_jogger src/moveit_cartesian_jogger.cpp)
 target_link_libraries(moveit_cartesian_jogger ${catkin_LIBRARIES})
 
+add_executable(move_group_cartesian_jog src/move_group_cartesian_jog.cpp)
+target_link_libraries(move_group_cartesian_jog ${catkin_LIBRARIES})
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(moveit_example_node moveit_example_generate_messages_cpp)
