@@ -56,13 +56,20 @@ namespace cartesian_jogger
 	namespace constants
 	{
 		static const std::string WORLD_FRAME_ID = "world_frame";
+
 		static const double LOOP_CYCLE_TIME = 0.1f; // seconds
+
 		static const double TIME_TOLERANCE = 0.001f; // second
+		static const double PLANNING_TIME = 4.0f; // seconds
+
+		static const double MATRIX_DIFF_TOLERANCE = 0.001;
+
+		static const int NUM_CARTESIAN_POINTS = 20;
 		static const double MIN_ALLOWED_TCP_STEP = 0.01f; //meters
 		static const double MAX_TCP_JUMP_THRESHOLD = 0.01f; // meters
-		static const double MATRIX_DIFF_TOLERANCE = 0.001;
-		static const double PLANNING_TIME = 4.0f; // seconds
-		static const int NUM_CARTESIAN_POINTS = 40;
+
+		static const int IK_SOLVER_ATTEMTPTS = 10;
+		static const double IK_SOLVER_TIMEOUT = 0.1f;
 	}
 
 	class MoveCartesianJog
@@ -125,14 +132,20 @@ namespace cartesian_jogger
 			ros::NodeHandle nh;
 
 			// moveit setup
-			move_group_ptr_.reset(new move_group_interface::MoveGroup(parameters::ARM_GROUP));
+			move_group_ptr_.reset(new move_group_interface::MoveGroup(arm_group_name_));
 			move_group_ptr_->setEndEffectorLink(parameters::TCP_LINK);
 			move_group_ptr_->setPoseReferenceFrame(constants::WORLD_FRAME_ID);
 			move_group_ptr_->setPlanningTime(constants::PLANNING_TIME);
 
+			robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(parameters::ROBOT_DESCRIPTION,true));
+			kinematic_model_ptr_  = robot_model_loader_->getModel();
+			kinematic_state_ptr_.reset(new robot_state::RobotState(kinematic_model_ptr_));
+			kinematic_state_ptr_->setToDefaultValues();
+
+
 			// messages
-			joint_states_msg_.name.assign(move_group_ptr_->getJoints().begin(),
-					move_group_ptr_->getJoints().end());
+			const moveit::core::JointModelGroup* joint_model_group_ptr = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
+			joint_states_msg_.name = std::vector<std::string>(joint_model_group_ptr->getActiveJointModelNames());
 			joint_states_msg_.position.clear();
 			joint_states_msg_.velocity.assign(joint_states_msg_.name.size(),0.0f);
 			joint_states_msg_.effort.assign(joint_states_msg_.name.size(),0.0f);
@@ -158,6 +171,7 @@ namespace cartesian_jogger
 		void transform_subs_callback(geometry_msgs::TransformStampedConstPtr tf_msg)
 		{
 			// saving new differential tf
+			ROS_INFO_STREAM("Received new differential transform");
 			tf::transformMsgToTF(tf_msg->transform,new_differential_tf_);
 		}
 
@@ -189,6 +203,36 @@ namespace cartesian_jogger
 
 		}
 
+		bool compute_ik(const geometry_msgs::Pose &tcp_pose,const std::vector<double> &initial_state,
+				std::vector<double> &joints)
+		{
+			// getting joint group
+			const moveit::core::JointModelGroup* joint_model_group_ptr = kinematic_model_ptr_->getJointModelGroup(arm_group_name_);
+
+			// setting initial state
+			kinematic_state_ptr_->setJointGroupPositions(joint_model_group_ptr,initial_state);
+
+			// converting to eigen
+			tf::Transform tcp_tf;
+			Eigen::Affine3d tcp_affine;
+			tf::poseMsgToTF(tcp_pose,tcp_tf);
+			tf::poseTFToEigen(tcp_tf,tcp_affine);
+
+			// solving ik
+			bool found = kinematic_state_ptr_->setFromIK(joint_model_group_ptr,
+								tcp_affine,tcp_link_name_,
+								constants::IK_SOLVER_ATTEMTPTS,
+								constants::IK_SOLVER_TIMEOUT);
+
+			// copying results
+			if(found)
+			{
+				kinematic_state_ptr_->copyJointGroupPositions(joint_model_group_ptr,joints);
+			}
+
+			return found;
+		}
+
 		// Computes new trajectory from differenctial transform 'diff_tf' in units of m/s and rad/s
 		bool compute_new_trajectory(const tf::Transform &diff_tf,
 				std::list<trajectory_msgs::JointTrajectoryPoint> &joint_trajectory)
@@ -208,27 +252,50 @@ namespace cartesian_jogger
 			tf::poseMsgToTF(move_group_ptr_->getCurrentPose(tcp_link_name_).pose,tcp_tf);
 
 			// creating trajectory
-			std::vector<geometry_msgs::Pose> way_points;
-			way_points.resize(constants::NUM_CARTESIAN_POINTS);
 			tf::Transform t = tcp_tf;
+			geometry_msgs::Pose tcp_pose;
+			trajectory_msgs::JointTrajectoryPoint joint_point,init_joint_point;
+
+			joint_point.positions = move_group_ptr_->getCurrentJointValues(); // initializing to current joints
+			init_joint_point.positions = move_group_ptr_->getCurrentJointValues();
+			joint_trajectory.clear();
+			bool found_ik = false;
 			for(int i = 0;i < constants::NUM_CARTESIAN_POINTS; i++)
 			{
 				t*=incr_tf;
-				tf::poseTFToMsg(t,way_points[i]);
+				tf::poseTFToMsg(t,tcp_pose);
+				if(compute_ik(tcp_pose,init_joint_point.positions,joint_point.positions))
+				{
+					joint_trajectory.push_back(joint_point);
+					init_joint_point.positions = joint_point.positions;
+					found_ik = true;
+				}
+				else
+				{
+					// no more solutions found
+					break;
+				}
 			}
+
+			ROS_INFO_STREAM("Found "<<joint_trajectory.size()<<" joint points");
 
 			// planning trajectory
-			double tcp_step = incr_tf.getOrigin().length();
-			moveit_msgs::RobotTrajectory traj;
-			bool result = (move_group_ptr_->computeCartesianPath(way_points,
-					tcp_step > constants::MIN_ALLOWED_TCP_STEP ? tcp_step : constants::MIN_ALLOWED_TCP_STEP,
-							constants::MAX_TCP_JUMP_THRESHOLD,traj,true) > 0);
-			if(result)
-			{
-				joint_trajectory.assign(traj.joint_trajectory.points.begin(),traj.joint_trajectory.points.end());
-			}
+//			double tcp_step = incr_tf.getOrigin().length();
+//			moveit_msgs::RobotTrajectory traj;
+//			bool result = (move_group_ptr_->computeCartesianPath(way_points,
+//					tcp_step > constants::MIN_ALLOWED_TCP_STEP ? tcp_step : constants::MIN_ALLOWED_TCP_STEP,
+//							constants::MAX_TCP_JUMP_THRESHOLD,traj,false) > 0);
+//			if(result)
+//			{
+//				ROS_INFO_STREAM("New Joint Trajectory Computed");
+//				joint_trajectory.assign(traj.joint_trajectory.points.begin(),traj.joint_trajectory.points.end());
+//			}
+//			else
+//			{
+//				ROS_ERROR_STREAM("Failed to compute trajectory");
+//			}
 
-			return result;
+			return found_ik;
 		}
 
 		bool equal(const tf::Transform &t1,const tf::Transform &t2,double tolerance)
@@ -283,9 +350,12 @@ namespace cartesian_jogger
 			motion_halted_ = equal(new_differential_tf_,tf::Transform::getIdentity(),constants::MATRIX_DIFF_TOLERANCE);
 			if(!motion_halted_)
 			{
+				ROS_INFO_STREAM("Motion Plan will be created");
 				// compute when new differential transform is received
 				if(!equal(differential_tf_,new_differential_tf_,constants::MATRIX_DIFF_TOLERANCE))
 				{
+					ROS_INFO_STREAM("Computing plan for new direction");
+
 					differential_tf_ = new_differential_tf_;
 					compute_new_trajectory(differential_tf_,joint_trajectory_);
 				}
@@ -294,6 +364,7 @@ namespace cartesian_jogger
 					// compute when no points remain
 					if(joint_trajectory_.size()==0)
 					{
+						ROS_INFO_STREAM("Computing plan for same direction");
 						compute_new_trajectory(differential_tf_,joint_trajectory_);
 					}
 				}
@@ -319,6 +390,9 @@ namespace cartesian_jogger
 
 		// moveit
 		MoveGroupPtr move_group_ptr_;
+		robot_model_loader::RobotModelLoaderPtr robot_model_loader_; // needs to be kept in scope in order to prevent the ik solver from getting unloaded
+		moveit::core::RobotModelPtr kinematic_model_ptr_;
+		moveit::core::RobotStatePtr kinematic_state_ptr_;
 
 		// publisher
 		ros::Publisher joint_state_pub_;
@@ -343,7 +417,7 @@ int main(int argc,char** argv)
 {
 	using namespace cartesian_jogger;
 	ros::init(argc,argv,"move_group_cartesian_jog");
-	ros::AsyncSpinner spinner(1);
+	ros::AsyncSpinner spinner(2);
 	spinner.start();
 
 	MoveCartesianJog c = MoveCartesianJog();
