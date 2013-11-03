@@ -72,6 +72,7 @@ namespace cartesian_jogger
 	public:
 		MoveCartesianJog():
 			differential_tf_(tf::Transform::getIdentity()),
+			new_differential_tf_(tf::Transform::getIdentity()),
 			motion_halted_(true)
 		{
 
