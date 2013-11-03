@@ -12,6 +12,8 @@
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <tf/transform_datatypes.h>
+#include <tf_conversions/tf_eigen.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
@@ -55,12 +57,12 @@ namespace cartesian_jogger
 	{
 		static const std::string WORLD_FRAME_ID = "world_frame";
 		static const double LOOP_CYCLE_TIME = 0.1f; // seconds
-		static const double TIME_TOLERANCE = 0.001f; // seconds
-		static const double ANGLE_TOLERANCE= 0.01f; // radians
-		static const double DIFF_TOLERANCE = 0.001;
+		static const double TIME_TOLERANCE = 0.001f; // second
+		static const double MIN_ALLOWED_TCP_STEP = 0.01f; //meters
+		static const double MAX_TCP_JUMP_THRESHOLD = 0.01f; // meters
+		static const double MATRIX_DIFF_TOLERANCE = 0.001;
 		static const double PLANNING_TIME = 4.0f; // seconds
-		static const int IK_SOLVER_ATTEMTPTS = 10;
-		static const double IK_SOLVER_TIMEOUT = 0.1f;
+		static const int NUM_CARTESIAN_POINTS = 40;
 	}
 
 	class MoveCartesianJog
@@ -69,8 +71,8 @@ namespace cartesian_jogger
 
 	public:
 		MoveCartesianJog():
-			last_incremental_tf_(tf2::Transform::getIdentity()),
-			total_traj_time_elapsed_(0.0f)
+			differential_tf_(tf::Transform::getIdentity()),
+			motion_halted_(true)
 		{
 
 		}
@@ -126,6 +128,15 @@ namespace cartesian_jogger
 			move_group_ptr_->setPoseReferenceFrame(constants::WORLD_FRAME_ID);
 			move_group_ptr_->setPlanningTime(constants::PLANNING_TIME);
 
+			// messages
+			joint_states_msg_.name.assign(move_group_ptr_->getJoints().begin(),
+					move_group_ptr_->getJoints().end());
+			joint_states_msg_.position.clear();
+			joint_states_msg_.velocity.assign(joint_states_msg_.name.size(),0.0f);
+			joint_states_msg_.effort.assign(joint_states_msg_.name.size(),0.0f);
+
+			// publisher
+			joint_state_pub_ =  nh.advertise<sensor_msgs::JointState>(topics::NEW_JOINT_STATES,1);
 
 			// subscriber
 			transform_subs_ = nh.subscribe(topics::TCP_DELTA_TRANSFORM,1,&MoveCartesianJog::transform_subs_callback,this);
@@ -144,7 +155,8 @@ namespace cartesian_jogger
 
 		void transform_subs_callback(geometry_msgs::TransformStampedConstPtr tf_msg)
 		{
-			move_to_target(*tf_msg.get());
+			// saving new differential tf
+			tf::transformMsgToTF(tf_msg->transform,new_differential_tf_);
 		}
 
 		void move_to_target(const geometry_msgs::TransformStamped &dt_msg)
@@ -169,34 +181,61 @@ namespace cartesian_jogger
 			move_group_interface::MoveGroup::Plan path_plan;
 			move_group_ptr_->plan(path_plan);
 
-			set_joint_trajectory(path_plan.trajectory_.joint_trajectory.points);
-
+			//set_joint_trajectory(path_plan.trajectory_.joint_trajectory.points);
+			joint_trajectory_.assign(path_plan.trajectory_.joint_trajectory.points.begin(),
+					path_plan.trajectory_.joint_trajectory.points.end());
 
 		}
 
-		bool compute_new_trajectory(const geometry_msgs::TransformStamped dt_msg)
+		// Computes new trajectory from differenctial transform 'diff_tf' in units of m/s and rad/s
+		bool compute_new_trajectory(const tf::Transform &diff_tf,
+				std::list<trajectory_msgs::JointTrajectoryPoint> &joint_trajectory)
 		{
-			tf2::Transform dt_tf;
-			const geometry_msgs::Vector3 &p = dt_msg.transform.translation;
-			const geometry_msgs::Quaternion &q = dt_msg.transform.rotation;
-			dt_tf.setOrigin(tf2::Vector3(p.x,p.y,p.z));
-			dt_tf.setRotation(tf2::Quaternion(q.x,q.y,q.z,q.w));
+			tf::Transform incr_tf; // incremental transform in units of meters & radians
 
-			// check for equality
-			//if(equal())
+			// setting incremental transform using loop cycle time
+			tf::Vector3 delta_rpy;
+			const tf::Matrix3x3 &dm = diff_tf.getBasis();
+			dm.getRPY(delta_rpy.m_floats[0],delta_rpy.m_floats[1],delta_rpy.m_floats[2]);
+			delta_rpy*=constants::LOOP_CYCLE_TIME; // multiplying velocity by loop cycle time.
+			incr_tf.setOrigin(diff_tf.getOrigin() * constants::LOOP_CYCLE_TIME);
+			incr_tf.getBasis().setRPY(delta_rpy.getX(),delta_rpy.getY(),delta_rpy.getZ());
 
+			// getting current transform
+			tf::Transform tcp_tf = tf::Transform();
+			tf::poseMsgToTF(move_group_ptr_->getCurrentPose(tcp_link_name_).pose,tcp_tf);
 
+			// creating trajectory
+			std::vector<geometry_msgs::Pose> way_points;
+			way_points.resize(constants::NUM_CARTESIAN_POINTS);
+			tf::Transform t = tcp_tf;
+			for(int i = 0;i < constants::NUM_CARTESIAN_POINTS; i++)
+			{
+				t*=incr_tf;
+				tf::poseTFToMsg(t,way_points[i]);
+			}
 
-			return false;
+			// planning trajectory
+			double tcp_step = incr_tf.getOrigin().length();
+			moveit_msgs::RobotTrajectory traj;
+			bool result = (move_group_ptr_->computeCartesianPath(way_points,
+					tcp_step > constants::MIN_ALLOWED_TCP_STEP ? tcp_step : constants::MIN_ALLOWED_TCP_STEP,
+							constants::MAX_TCP_JUMP_THRESHOLD,traj,true) > 0);
+			if(result)
+			{
+				joint_trajectory.assign(traj.joint_trajectory.points.begin(),traj.joint_trajectory.points.end());
+			}
+
+			return result;
 		}
 
-		bool equal(const tf2::Transform &t1,const tf2::Transform &t2,double tolerance)
+		bool equal(const tf::Transform &t1,const tf::Transform &t2,double tolerance)
 		{
 
-			const tf2::Matrix3x3 &m1 = t1.getBasis();
-			const tf2::Matrix3x3 &m2 = t2.getBasis();
-			const tf2::Vector3 &p1 = t1.getOrigin();
-			const tf2::Vector3 &p2 = t2.getOrigin();
+			const tf::Matrix3x3 &m1 = t1.getBasis();
+			const tf::Matrix3x3 &m2 = t2.getBasis();
+			const tf::Vector3 &p1 = t1.getOrigin();
+			const tf::Vector3 &p2 = t2.getOrigin();
 
 
 			// comparing bases
@@ -222,50 +261,50 @@ namespace cartesian_jogger
 			return equal;
 		}
 
-		void set_joint_trajectory(const std::vector<trajectory_msgs::JointTrajectoryPoint> &joint_trajectory)
+		bool get_next_joint_positions(std::vector<double> &joint_positions)
 		{
-			total_traj_time_elapsed_ = 0;
-			joint_trajectory_.assign(joint_trajectory.begin(),joint_trajectory.end());
-
-		}
-
-		bool get_next_joint_positions(std::vector<double> &joint_positions, double time_from_traj_start)
-		{
-			bool position_available = true;
-
-			while(joint_trajectory_.size()>0)
-			{
-				trajectory_msgs::JointTrajectoryPoint &sp = *joint_trajectory_.begin();
-				if(std::abs(sp.time_from_start.toSec() - time_from_traj_start) >= constants::TIME_TOLERANCE)
-				{
-					joint_positions.assign(sp.positions.begin(),sp.positions.end());
-					joint_trajectory_.pop_front();
-					break;
-				}
-				else
-				{
-					joint_trajectory_.pop_front();
-				}
-			}
+			bool position_available = joint_trajectory_.size()>0;
 
 			if(position_available)
 			{
-				// check time elapsed
-
-				trajectory_msgs::JointTrajectoryPoint &sp = *joint_trajectory_.begin();
-				joint_positions.assign(sp.positions.begin(),sp.positions.end());
-				joint_trajectory_.pop_front();
+				trajectory_msgs::JointTrajectoryPoint &p = *joint_trajectory_.begin();
+				joint_positions.assign(p.positions.begin(),p.positions.end());
+				joint_trajectory_.pop_front(); // removing point
 			}
+
 			return position_available;
+		}
+
+		void update_trajectory()
+		{
+			// check if new tf is not identity or same as last differential received
+			motion_halted_ = equal(new_differential_tf_,tf::Transform::getIdentity(),constants::MATRIX_DIFF_TOLERANCE);
+			if(!motion_halted_)
+			{
+				// compute when new differential transform is received
+				if(!equal(differential_tf_,new_differential_tf_,constants::MATRIX_DIFF_TOLERANCE))
+				{
+					differential_tf_ = new_differential_tf_;
+					compute_new_trajectory(differential_tf_,joint_trajectory_);
+				}
+				else
+				{
+					// compute when no points remain
+					if(joint_trajectory_.size()==0)
+					{
+						compute_new_trajectory(differential_tf_,joint_trajectory_);
+					}
+				}
+			}
 		}
 
 		void publish_joint_state()
 		{
-			static std::vector<double> joints;
-			total_traj_time_elapsed_ = total_traj_time_elapsed_ + constants::LOOP_CYCLE_TIME;
-			if(get_next_joint_positions(joints,total_traj_time_elapsed_))
+			joint_states_msg_.position.clear();
+			update_trajectory();
+			if(!motion_halted_ && get_next_joint_positions(joint_states_msg_.position))
 			{
-
+				joint_state_pub_.publish(joint_states_msg_);
 			}
 		}
 
@@ -279,13 +318,20 @@ namespace cartesian_jogger
 		// moveit
 		MoveGroupPtr move_group_ptr_;
 
+		// publisher
+		ros::Publisher joint_state_pub_;
+
 		// subscriber
 		ros::Subscriber transform_subs_;
 
+		// messages
+		sensor_msgs::JointState joint_states_msg_;
+
 		// motion control
 		std::list<trajectory_msgs::JointTrajectoryPoint> joint_trajectory_;
-		tf2::Transform last_incremental_tf_;
-		double total_traj_time_elapsed_;
+		tf::Transform differential_tf_;
+		tf::Transform new_differential_tf_;
+		bool motion_halted_;
 
 	};
 
