@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <description> Needs to launch the planning scene setup first as follows:
+		roslaunch moveit_example planning_scene_setup.launch
+ </description>
+
+  <node name="move_group_cartesian_jog" pkg="moveit_example" type="move_group_cartesian_jog" output="screen">
+	<param name="arm_group" value="manipulator"/>
+	<param name="tcp_link" value="gripper_palm"/>
+	<rosparam command="load" file="$(find irb2400_moveit_generated)/config/kinematics.yaml"/>
+  </node>
+
+  <!-- <remap from="tcp_delta_transform" to="moveit_cartesian_jogger/tcp_delta_transform"/> -->
+  <node name="jog_gui" pkg="moveit_example" type="cartesian_move_publisher_gui.py">
+	<param name="allow_continuous_publishing" value="False"/>
+  </node>
+
+</launch>
