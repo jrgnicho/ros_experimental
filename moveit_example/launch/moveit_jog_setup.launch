@@ -23,5 +23,5 @@
   </include>
 
 
-  <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="false" args="-d $(find moveit_example)/rviz/motion_jog_conf.rviz" output="screen"/>
+  <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="false" args="-d $(find moveit_example)/rviz/moveit_jog_conf.rviz" output="screen"/>
 </launch>
