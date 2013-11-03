@@ -100,6 +100,7 @@ namespace cartesian_jogger
 			{
 				loop_duration.sleep();
 				ros::spinOnce();
+				publish_joint_state();
 			}
 
 			return;
