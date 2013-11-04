@@ -18,9 +18,13 @@ LEFT_ARROW_IMG_PATH = RESOURCES_PATH + "/left_blue.gif"
 RIGHT_ARROW_IMG_PATH = RESOURCES_PATH + "/right_blue.gif"
 
 # displacement constants
-DELTA_X = 0.02 #meters
-DELTA_Y = 0.02 #meters
-DELTA_Z = 0.02 #meters
+DELTA_X = 0.1 #meters
+DELTA_Y = 0.1 #meters
+DELTA_Z = 0.1 #meters
+
+# widget size constants
+IMAGE_WIDTH = 36
+IMAGE_HEIGHT = 36
 
 # topics
 TRANSFORM_STAMPED_TOPIC = "tcp_delta_transform"
@@ -30,6 +34,8 @@ WORLD_FRAME = "world_frame"
 
 # parameters
 PARAM_CONTINUOUS_PUBLISH = "allow_continuous_publishing"
+
+
 
 class CartesianGuiPublisher(Frame):
     
@@ -76,50 +82,104 @@ class CartesianGuiPublisher(Frame):
     def create_layout(self):
         
         # x-y buttons 
-        self.x_y_frame_ = Frame(self)
+        self.x_y_frame_ = Frame(self,bd=2,relief = SUNKEN)
         
-        # up button
-        self.images_.append(self.open_image(UP_ARROW_IMG_PATH, 36, 36))
+        # up button (y+)
+        self.images_.append(self.open_image(UP_ARROW_IMG_PATH, IMAGE_WIDTH, IMAGE_HEIGHT))
         self.y_pos_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[0])
         #self.y_pos_button_ = Button(self.x_y_frame_,text='/\\')
-        #self.y_pos_button_.configure(command = lambda arg = DELTA_Y: self.apply_translation(0, arg, 0))
         self.y_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_Y:(self.enable_transform_publish(True),
                                                                          self.apply_translation(0, arg, 0)))
         self.y_pos_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
                                                                     self.apply_translation(0, 0, 0)))
-        self.y_pos_button_.grid(row = 0,column = 1)
+        self.y_pos_button_.grid(row = 1,column = 2)
         
-        # down button
-        self.images_.append(self.open_image(DOWN_ARROW_IMG_PATH,36,36))
+        # y plus label
+        self.y_pos_label_ = Label(self.x_y_frame_,text="y+",justify=CENTER)
+        self.y_pos_label_.grid(row = 0,column = 0,columnspan = 5)
+        
+        # down button (y-)
+        self.images_.append(self.open_image(DOWN_ARROW_IMG_PATH,IMAGE_WIDTH,IMAGE_HEIGHT))
         self.y_neg_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[1])
         #self.y_neg_button_ = Button(self.x_y_frame_,text='\\/')
         self.y_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_Y: (self.enable_transform_publish(True),
                                                                            self.apply_translation(0, arg, 0)))
         self.y_neg_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
                                                                     self.apply_translation(0, 0, 0)))
-        self.y_neg_button_.grid(row = 2,column = 1)
+        self.y_neg_button_.grid(row = 3,column = 2)
         
-        # left button
-        self.images_.append(self.open_image(LEFT_ARROW_IMG_PATH,36,36))
+        # y minus label
+        self.y_pos_label_ = Label(self.x_y_frame_,text="y-",justify=CENTER)
+        self.y_pos_label_.grid(row = 4,column = 0,columnspan = 5)
+        
+        # left button (x-)
+        self.images_.append(self.open_image(LEFT_ARROW_IMG_PATH,IMAGE_WIDTH,IMAGE_HEIGHT))
         self.x_neg_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[2])
         #self.x_neg_button_ = Button(self.x_y_frame_,text='<')
         self.x_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_X: (self.enable_transform_publish(True),
                                                                            self.apply_translation(arg, 0 , 0)))
         self.x_neg_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
                                                                     self.apply_translation(0, 0, 0)))
-        self.x_neg_button_.grid(row = 1 ,column = 0)
+        self.x_neg_button_.grid(row = 2 ,column = 1)
         
-        # right button
-        self.images_.append(self.open_image(RIGHT_ARROW_IMG_PATH,36,36))
+        # x minus label
+        self.x_neg_label_ = Label(self.x_y_frame_,text="x-",justify=CENTER)
+        self.x_neg_label_.grid(row = 2,column = 0)
+        
+        # right button (x+)
+        self.images_.append(self.open_image(RIGHT_ARROW_IMG_PATH,IMAGE_WIDTH,IMAGE_HEIGHT))
         self.x_pos_button_ = Button(self.x_y_frame_,justify=LEFT,image=self.images_[3])
         #self.x_pos_button_ = Button(self.x_y_frame_,text='>')
         self.x_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_X: (self.enable_transform_publish(True),
                                                                           self.apply_translation(arg, 0 , 0)))
         self.x_pos_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
                                                                     self.apply_translation(0, 0, 0)))
-        self.x_pos_button_.grid(row = 1 ,column = 2)
+        self.x_pos_button_.grid(row = 2 ,column = 3)
         
-        self.x_y_frame_.pack(side=TOP)
+        # x plus label
+        self.x_pos_label_ = Label(self.x_y_frame_,text="x+",justify=CENTER)
+        self.x_pos_label_.grid(row = 2,column = 4)
+        
+        self.x_y_frame_.grid(row=0,column=0)
+        
+        # z buttons and labels frame
+        self.z_frame_ = Frame(self,bd = 2 , relief = SUNKEN)
+        
+        # z up button
+        self.images_.append(self.open_image(UP_ARROW_IMG_PATH, IMAGE_WIDTH, IMAGE_HEIGHT))        
+        self.z_pos_button_ = Button(self.z_frame_,justify=LEFT,image=self.images_[4])
+        self.z_pos_button_.bind("<Button-1>",lambda event,arg = DELTA_Z:(self.enable_transform_publish(True),
+                                                                         self.apply_translation(0, 0, arg)))
+        self.z_pos_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
+                                                                    self.apply_translation(0, 0, 0)))
+        self.z_pos_button_.grid(row = 1,column = 0)
+        
+        # z plus label
+        self.z_pos_label_ = Label(self.z_frame_,text="z+",justify=CENTER)
+        self.z_pos_label_.grid(row = 0,column = 0)
+        
+        # z down button
+        self.images_.append(self.open_image(DOWN_ARROW_IMG_PATH, IMAGE_WIDTH, IMAGE_HEIGHT))        
+        self.z_neg_button_ = Button(self.z_frame_,justify=LEFT,image=self.images_[5])
+        self.z_neg_button_.bind("<Button-1>",lambda event,arg = -DELTA_Z:(self.enable_transform_publish(True),
+                                                                         self.apply_translation(0, 0, arg)))
+        self.z_neg_button_.bind("<ButtonRelease-1>", lambda event: (self.enable_transform_publish(True),
+                                                                    self.apply_translation(0, 0, 0)))
+        self.z_neg_button_.grid(row = 3,column = 0)
+        
+        # z minuz label
+        self.z_pos_label_ = Label(self.z_frame_,text="z-",justify=CENTER)
+        self.z_pos_label_.grid(row = 4,column = 0)
+        
+        # center blank label
+        self.z_center_label_ = Label(self.z_frame_,text="\n"*2,justify=CENTER)
+        self.z_center_label_.grid(row = 2,column = 0)
+        
+        self.z_frame_.grid(row=0,column = 1)
+        
+        
+        
+        
         
         return
     
