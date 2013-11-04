@@ -64,11 +64,11 @@ namespace cartesian_jogger
 
 		static const double MATRIX_DIFF_TOLERANCE = 0.001;
 
-		static const int NUM_CARTESIAN_POINTS = 20;
+		static const int NUM_CARTESIAN_POINTS = 40;
 		static const double MIN_ALLOWED_TCP_STEP = 0.01f; //meters
 		static const double MAX_TCP_JUMP_THRESHOLD = 0.01f; // meters
 
-		static const int IK_SOLVER_ATTEMTPTS = 10;
+		static const int IK_SOLVER_ATTEMTPTS = 4;
 		static const double IK_SOLVER_TIMEOUT = 0.1f;
 	}
 
