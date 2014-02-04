@@ -83,13 +83,21 @@ include_directories(include
 # add_library(libviz_example
 #   src/${PROJECT_NAME}/libviz_example.cpp
 # )
-add_library(${PROJECT_NAME} src/widgets/RvizGrid.cpp ${MOC_FILES}) # adding source files produced with Qt's Meta-object compiler
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES})
+# adding source files produced with Qt's Meta-object compiler
+add_library(${PROJECT_NAME}_widgets src/widgets/RvizGrid.cpp ${MOC_FILES}) 
+target_link_libraries(${PROJECT_NAME}_widgets ${catkin_LIBRARIES} ${QT_LIBRARIES})
+
+# adding interactive marker library
+add_library(${PROJECT_NAME}_interactive_markers 
+	src/interactive_marker_servers/PolygonInteractiveMarkerServer.cpp) 
 
 ## Declare a cpp executable
-# add_executable(libviz_example_node src/libviz_example_node.cpp)
 add_executable(rviz_grid_node src/nodes/rviz_adjustable_grid_node.cpp )
-target_link_libraries(rviz_grid_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES})
+target_link_libraries(rviz_grid_node ${PROJECT_NAME}_widgets ${catkin_LIBRARIES} ${QT_LIBRARIES})
+
+# interactive marker server node
+add_executable(polygonal_interactive_marker_node src/nodes/polygonal_interactive_marker_node.cpp )
+target_link_libraries(polygonal_interactive_marker_node ${PROJECT_NAME}_interactive_markers ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
