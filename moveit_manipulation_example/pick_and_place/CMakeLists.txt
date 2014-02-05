@@ -70,9 +70,11 @@ include_directories(include
 
 ## Declare a cpp executable
 add_executable(pick_and_place_node src/nodes/pick_and_place_node.cpp)
+add_dependencies(pick_and_place_node pick_and_place_generate_messages_cpp)
 target_link_libraries(pick_and_place_node ${catkin_LIBRARIES})
 
 add_executable(grasp_service src/nodes/grasp_service_server.cpp)
+add_dependencies(grasp_service pick_and_place_generate_messages_cpp)
 target_link_libraries(grasp_service ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
