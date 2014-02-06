@@ -12,16 +12,15 @@ using namespace libviz_example::interactive_marker_servers;
 int main(int argc,char** argv)
 {
 	ros::init(argc,argv,"polygonal_interactive_markers_node");
+	ros::NodeHandle nh;
 
 	PolygonInteractiveMarkerServer server;
 	server.run();
 
-	ros::Duration loop_duration(0.2f);
-	while(ros::ok())
-	{
-		ros::spinOnce();
-		loop_duration.sleep();
-	}
+	ros::spin();
+
+	ROS_INFO_STREAM("Exiting node");
+
 
 	return 0;
 }
