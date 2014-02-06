@@ -10,6 +10,7 @@
 
 #include <ros/ros.h>
 #include <interactive_markers/interactive_marker_server.h>
+#include <interactive_markers/menu_handler.h>
 
 namespace interactive_markers
 {
@@ -37,13 +38,16 @@ public:
 protected:
 
 	interactive_markers::InteractiveMarkerServerPtr marker_server_ptr_;
+	interactive_markers::MenuHandler menu_handler_;
 	std::vector<std::string> marker_names_;
 
 protected:
 
 
 	bool init();
-	void process_marker_callback(
+	void button_marker_callback(
+			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
+	void menu_marker_callback(
 			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 	void create_polygon_marker(visualization_msgs::Marker& marker,int triangles);
 	void create_interactive_marker(const geometry_msgs::Pose& pose,std::string name,
