@@ -79,13 +79,12 @@ bool PolygonInteractiveMarkerServer::init()
 		// add marker to server
 		marker_server_ptr_->insert(int_marker,button_callback);
 		menu_handler_.apply(*marker_server_ptr_,int_marker.name);
-		marker_server_ptr_->applyChanges();
 
 		// save name
 		marker_names_.push_back(name);
 	}
 
-
+	marker_server_ptr_->applyChanges();
 }
 
 void PolygonInteractiveMarkerServer::run()
