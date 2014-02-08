@@ -13,7 +13,10 @@ add_definitions(-DQT_NO_KEYWORDS)
 
 # QT Meta-object compiler: this produces additional source files under 'MOC_FILES' which then 
 # need to be added to any project libraries or executables that reference the originating user source file.
-qt4_wrap_cpp(MOC_FILES  include/libviz_example/widgets/RvizGrid.h) 
+qt4_wrap_cpp(MOC_FILES  
+	include/libviz_example/widgets/RvizGrid.h
+	include/libviz_example/panels/TestRvizPanel.h
+	include/libviz_example/panels/help_panel.h) 
 #set(SOURCE_FILES
 #  src/widgets/RvizGrid.cpp
 #  src/nodes/rviz_adjustable_grid_node.cpp
@@ -23,7 +26,6 @@ qt4_wrap_cpp(MOC_FILES  include/libviz_example/widgets/RvizGrid.h)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -50,14 +52,17 @@ catkin_package(
 include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
+link_directories(${catkin_LIBRARY_DIRS})
 
-
+ 
 # adding source files produced with Qt's Meta-object compiler
 add_library(${PROJECT_NAME} 
-	src/widgets/RvizGrid.cpp ${MOC_FILES}
-	src/interactive_marker_servers/PolygonInteractiveMarkerServer.cpp) 
+	src/widgets/RvizGrid.cpp 
+	src/interactive_marker_servers/PolygonInteractiveMarkerServer.cpp
+	src/panels/TestRvizPanel.cpp
+	src/panels/help_panel.cpp
+	${MOC_FILES}) 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES})
-
 
 ## Declare a cpp executable
 add_executable(rviz_grid_node src/nodes/rviz_adjustable_grid_node.cpp )
@@ -66,6 +71,7 @@ target_link_libraries(rviz_grid_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LI
 # interactive marker server node
 add_executable(polygonal_interactive_marker_node src/nodes/polygonal_interactive_marker_node.cpp )
 target_link_libraries(polygonal_interactive_marker_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -76,4 +82,19 @@ target_link_libraries(polygonal_interactive_marker_node ${PROJECT_NAME} ${catkin
 #   ${catkin_LIBRARIES}
 # )
 
+## Install rules
+
+install(TARGETS
+  ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  #RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES 
+  plugin_description.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(DIRECTORY icons/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/icons)
 
