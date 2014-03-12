@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<library path="lib/liblibviz_example">
+  <class name="libviz_example/TestRvizPanel"
+         type="libviz_example::panels::TestRvizPanel"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget that can be used in an rviz instance
+    </description>
+  </class>
+  <class name="libviz_example/HelpPanel"
+         type="libviz_example::panels::HelpPanel"
+         base_class_type="rviz::Panel">
+    <description>
+      rviz help panel replica
+    </description>
+  </class>
+</library>

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="polygonal_interactive_marker_node" pkg="libviz_example" type="polygonal_interactive_marker_node"
+		output="screen"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find libviz_example)/rviz/interactive_markers.rviz"/>
+</launch>
