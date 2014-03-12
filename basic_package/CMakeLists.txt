@@ -21,27 +21,11 @@ catkin_metapackage()
 #######################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
 add_message_files(
 	FILES TestMessage.msg
 )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
 generate_messages(
 	DEPENDENCIES
 	std_msgs
@@ -62,6 +46,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS message_runtime roscpp rospy std_msgs genmsg
+   DEPENDS std_msgs
 )
 
 ###########
@@ -79,8 +64,8 @@ catkin_package(
 ## Declare a cpp executable
 # add_executable(basic_package_node src/basic_package_node.cpp)
 add_executable(basic_publisher_node src/basic_publisher.cpp)
-target_link_libraries(basic_publisher_node ${catkin_LIBRARIES})
 add_dependencies(basic_publisher_node basic_package_gencpp)
+target_link_libraries(basic_publisher_node ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
