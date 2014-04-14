@@ -64,7 +64,7 @@ catkin_package(
 ## Declare a cpp executable
 # add_executable(basic_package_node src/basic_package_node.cpp)
 add_executable(basic_publisher_node src/basic_publisher.cpp)
-add_dependencies(basic_publisher_node basic_package_gencpp)
+add_dependencies(basic_publisher_node basic_package_gencpp basic_package_generate_messages_cpp)
 target_link_libraries(basic_publisher_node ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
