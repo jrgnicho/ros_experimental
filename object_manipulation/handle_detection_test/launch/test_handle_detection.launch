@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<launch>
+
+	<remap from="/camera/depth_registered/points" to="/cloud_pcd"/>
+	<node name="localization" pkg="handle_detector" type="handle_detector_localization" output="screen">
+		<!-- affordance search parameters -->
+    <param name="file" value="" />
+		<param name="target_radius" value="0.01" />
+		<param name="target_radius_error" value="0.01" />
+		<param name="affordance_gap" value="0.008" />
+		<param name="sample_size" value="10000" />		
+		<param name="use_clearance_filter" value="true" />
+		<param name="use_occlusion_filter" value="true" />
+    <param name="curvature_estimator" value="0" />
+		<param name="point_cloud_source" value="1" />
+		<param name="update_interval" value="3.0" />
+		
+		<!-- RANSAC parameters -->
+		<param name="ransac_runs" value="20" />
+		<param name="ransac_min_inliers" value="4" />
+		<param name="ransac_dist_radius" value="0.04" />
+		<param name="ransac_orient_radius" value="0.6" />
+		<param name="ransac_radius_radius" value="0.06" />
+				
+		<!-- workspace limits -->
+		<param name="max_range" value="1.2" />
+		<param name="workspace_min_x" value="-1.0" />
+		<param name="workspace_max_x" value="1.0" />
+		<param name="workspace_min_y" value="-1.0" />
+		<param name="workspace_max_y" value="1.0" />
+		<param name="workspace_min_z" value="-1.0" />
+		<param name="workspace_max_z" value="1.0" />
+		
+		<!-- number of threads to use -->
+		<param name="num_threads" value="8" />
+	</node>
+
+	<!-- point cloud publisher -->
+	<node pkg="pcl_ros" name="point_cloud_publisher" type="pcd_to_pointcloud" args="$(find handle_detection_test)/pcd/milk_cartoon_all_small_clorox.pcd 0.1">
+		<param name="frame_id" value="/camera_rgb_optical_frame"/>
+	</node>
+
+	<!-- transform for published point cloud -->
+	<node pkg="tf" type="static_transform_publisher"
+		name="point_cloud_frame_broadcaster" args="0.28 0 0.48 -1.57 0 0.96  /world_frame /camera_rgb_optical_frame 100"/>
+
+	<!-- rviz -->
+	<node pkg="rviz" name="rviz_handle_detection_visualization" type="rviz" args="-d $(find handle_detection_test)/rviz/handle_detection_visualization.rviz"/>
+
+</launch>

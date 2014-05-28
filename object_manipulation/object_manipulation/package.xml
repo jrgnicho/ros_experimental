@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>object_manipulation</name>
+  <version>0.0.0</version>
+  <description>The object_manipulation package</description>
+
+  <maintainer email="coky@todo.todo">coky</maintainer>
+  <license>Apache2</license>
+  <author email="jnicho@swri.org">Jorge Nicho</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
