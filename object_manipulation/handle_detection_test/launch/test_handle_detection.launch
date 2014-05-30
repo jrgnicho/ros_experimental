@@ -5,10 +5,10 @@
 	<node name="localization" pkg="handle_detector" type="handle_detector_localization" output="screen">
 		<!-- affordance search parameters -->
     <param name="file" value="" />
-		<param name="target_radius" value="0.01" />
-		<param name="target_radius_error" value="0.01" />
+		<param name="target_radius" value="0.015" />
+		<param name="target_radius_error" value="0.015" />
 		<param name="affordance_gap" value="0.008" />
-		<param name="sample_size" value="10000" />		
+		<param name="sample_size" value="20000" />		
 		<param name="use_clearance_filter" value="true" />
 		<param name="use_occlusion_filter" value="true" />
     <param name="curvature_estimator" value="0" />
@@ -17,10 +17,10 @@
 		
 		<!-- RANSAC parameters -->
 		<param name="ransac_runs" value="20" />
-		<param name="ransac_min_inliers" value="4" />
-		<param name="ransac_dist_radius" value="0.04" />
-		<param name="ransac_orient_radius" value="0.6" />
-		<param name="ransac_radius_radius" value="0.06" />
+		<param name="ransac_min_inliers" value="2" />
+		<param name="ransac_dist_radius" value="0.01" />
+		<param name="ransac_orient_radius" value="0.2" />
+		<param name="ransac_radius_radius" value="0.01" />
 				
 		<!-- workspace limits -->
 		<param name="max_range" value="1.2" />
