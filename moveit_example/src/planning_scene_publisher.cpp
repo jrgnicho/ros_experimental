@@ -32,20 +32,14 @@
 static const std::string ATTACHED_COLLISION_OBJECT_TOPIC = "attached_collision_object";
 static const std::string COLLISION_OBJECT_TOPIC = "collision_object";
 static const std::string PLANNING_SCENE_DIFF_TOPIC = "planning_scene";
+static const std::string TCP_POSE_TOPIC_ = "tcp_pose";
 
 // parameters
 static std::string COLLISION_OBJECT_PARAM = "collision_object_info";
+static std::string TCP_TARGET_PARAM = "tcp_target_info";
 static std::string ATTACHED_OBJECT_PARAM = "attached_object_info";
 static std::string ARM_GROUP_PARAM = "arm_group";
 static std::string TCP_LINK_PARAM = "tcp_link";
-
-// global names
-static const std::string ATTACHED_OBJECT_ID = "attached_obj";
-static const std::string COLLISION_OBJECT_ID = "collision_obj";
-
-// constants
-static const tf::Vector3 BOX_POSITION = tf::Vector3(0.0f,0.0f,0.0f);
-static const double BOX_SIDE_LENGTH = 0.1f;
 
 
 using namespace boost::assign;
@@ -56,134 +50,202 @@ namespace command_flags
 	{
 		EXIT = -1,
 		ADD_COLLISION_OBJECT = 0,
-		ATTACHED_OBJECT_TO_TCP = 1,
-		UPDATE_COLLISION_OBJECT = 2,
-		REMOVE_COLLISION_OBJECT = 3,
-		DETACH_OBJECT_FROM_TCP = 4,
+		REMOVE_COLLISION_OBJECT = 1,
+		ATTACH_TO_TCP = 2,
+		DETACH_FROM_TCP = 3,
+		DETACH_FROM_TCP_AND_REMOVE = 4,
 		ADD_OBJECT_TO_PLANNING_SCENE = 5,
-		ATTACH_TO_TCP_IN_PLANNING_SCENE = 6,
-		UPDATE_OBJECT_IN_PLANNING_SCENE = 7,
-		REMOVE_OBJECT_FROM_PLANNING_SCENE = 8,
-		DETACH_FROM_TCP_IN_PLANNING_SCENE = 9,
+		REMOVE_OBJECT_FROM_PLANNING_SCENE = 6,
+		ATTACH_TO_TCP_IN_PLANNING_SCENE = 7,
+		DETACH_FROM_TCP_IN_PLANNING_SCENE = 8,
+		DETACH_FROM_TCP_AND_REMOVE_IN_PLANNING_SCENE = 9,
 		MOVE_ARM_TO_RANDOM_TARGET = 10,
-		NONE = 11
+		MOVE_ARM_TO_TCP_TARGET = 11,
+		MOVE_ARM_TO_TARGET_PREVIEW=12,
+		NONE = 14
 	};
 
 	static std::map<int,std::string> NAME_MAPPINGS = map_list_of((int)ADD_COLLISION_OBJECT,"ADD COLLISION_OBJECT")
-		((int)ATTACHED_OBJECT_TO_TCP,"ATTACHED_OBJECT_TO_TCP")
-		((int)UPDATE_COLLISION_OBJECT,"UPDATE_COLLISION_OBJECT")
 		((int)REMOVE_COLLISION_OBJECT,"REMOVE_COLLISION_OBJECT")
-		((int)DETACH_OBJECT_FROM_TCP,"DETACH_OBJECT_FROM_TCP")
+		((int)ATTACH_TO_TCP,"ATTACH_TO_TCP")
+		((int)DETACH_FROM_TCP,"DETACH_FROM_TCP")
+		((int)DETACH_FROM_TCP_AND_REMOVE,"DETACH_FROM_TCP_AND_REMOVE")
 		((int)ADD_OBJECT_TO_PLANNING_SCENE,"ADD_OBJECT_TO_PLANNING_SCENE")
-		((int)ATTACH_TO_TCP_IN_PLANNING_SCENE,"ATTACH_TO_TCP_IN_PLANNING_SCENE")
-		((int)UPDATE_OBJECT_IN_PLANNING_SCENE,"UPDATE_OBJECT_IN_PLANNING_SCENE")
 		((int)REMOVE_OBJECT_FROM_PLANNING_SCENE,"REMOVE_OBJECT_FROM_PLANNING_SCENE")
+		((int)ATTACH_TO_TCP_IN_PLANNING_SCENE,"ATTACH_TO_TCP_IN_PLANNING_SCENE")
 		((int)DETACH_FROM_TCP_IN_PLANNING_SCENE,"DETACH_FROM_TCP_IN_PLANNING_SCENE")
+		((int)DETACH_FROM_TCP_AND_REMOVE_IN_PLANNING_SCENE,"DETACH_FROM_TCP_AND_REMOVE_IN_PLANNING_SCENE")
 		((int)MOVE_ARM_TO_RANDOM_TARGET,"MOVE_ARM_TO_RANDOM_TARGET")
+		((int)MOVE_ARM_TO_TCP_TARGET,"MOVE_ARM_TO_TCP_TARGET")
+		((int)MOVE_ARM_TO_TARGET_PREVIEW,"MOVE_ARM_TO_TARGET_PREVIEW")
 		((int)EXIT ,"EXIT ");
 }
 
-struct CollisionObjectDetails
+class StructParamLoader
 {
-
-	CollisionObjectDetails()
+public:
+	StructParamLoader()
 	{
 
 	}
 
-	geometry_msgs::Pose pose_;
-	std::string id_;
-	std::string frame_id_;
-	std::string link_name_; // name of arm link if attached to robot
-	tf::Vector3 size_;
-	int shape_type_;
-
-
-	bool fetch_parameters(std::string name_space)
+	bool load_parameters(std::string param_name,XmlRpc::XmlRpcValue &p,std::string ns="")
 	{
-		ros::NodeHandle nh("~");
+		ros::NodeHandle nh(ns);
 		bool success = true;
-		XmlRpc::XmlRpcValue param;
-		shape_msgs::SolidPrimitive shape;
-		tf::Vector3 axis;
-		double val;
 
-		success = nh.getParam(name_space + "/frame_id",frame_id_) && nh.getParam(name_space + "/id",id_) &&
-				nh.getParam(name_space + "/link_name",link_name_) && nh.getParam(name_space + "/shape_type",shape_type_);
+		// loading structure array
+		success = nh.getParam(param_name,p) && p.getType()==p.TypeStruct;
 
-
-		if(success && nh.getParam(name_space + "/size",param))
+		// verifying all members
+		std::list<std::string>::iterator i;
+		for(i = field_names_.begin(); i != field_names_.end();i++)
 		{
-			val = static_cast<double>(param["x"]); size_.setX(val);
-			val = static_cast<double>(param["y"]); size_.setY(val);
-			val = static_cast<double>(param["z"]); size_.setZ(val);
-		}
-		else
-		{
-			success = false;
+			if(!p.hasMember(*i))
+			{
+				success = false;
+				ROS_ERROR_STREAM("structure field '"<<*i<<"' in parameter "<<nh.getNamespace()+ "/" + param_name <<" not found");
+				break;
+			}
 		}
 
-		if(success && nh.getParam(name_space + "/position",param))
-		{
-			val = static_cast<double>(param["x"]); pose_.position.x = val;
-			val = static_cast<double>(param["y"]); pose_.position.y = val;
-			val = static_cast<double>(param["z"]); pose_.position.z = val;
-		}
-		else
-		{
-			success = false;
-		}
+		return success;
 
-		if(success && nh.getParam(name_space + "/orientation",param))
-		{
-			val = static_cast<double>(param["x"]); pose_.orientation.x = val;
-			val = static_cast<double>(param["y"]); pose_.orientation.y = val;
-			val = static_cast<double>(param["z"]); pose_.orientation.z = val;
-			val = static_cast<double>(param["z"]); pose_.orientation.w = val;
-		}
-		else
-		{
-			success = false;
-		}
+	}
 
+protected:
+
+	std::list<std::string> field_names_;
+};
+
+class PoseTargetDetails: public StructParamLoader
+{
+
+public:
+	PoseTargetDetails()
+	{
+		// list of fields in array
+		field_names_ = list_of("frame_id")
+				("x")
+				("y")
+				("z")
+				("rx")
+				("ry")
+				("rz");
+	}
+
+	bool load_parameters(std::string param_name,geometry_msgs::PoseStamped &pose,std::string ns="")
+	{
+		XmlRpc::XmlRpcValue p;
+		tf::Transform t;
+		double x,y,z,rx,ry,rz;
+
+		bool success = StructParamLoader::load_parameters(param_name,p,ns);
 		if(success)
 		{
-			// building shape
-			shape.type = shape_msgs::SolidPrimitive::BOX;
+			x = static_cast<double>(p["x"]);
+			y = static_cast<double>(p["y"]);
+			z = static_cast<double>(p["z"]);
+			rx = static_cast<double>(p["rx"]);
+			ry = static_cast<double>(p["ry"]);
+			rz = static_cast<double>(p["rz"]);
+
+			t.setOrigin(tf::Vector3(x,y,z));
+			t.getBasis().setRPY(rx,ry,rz);
+			tf::poseTFToMsg(t,pose.pose);
+
+			pose.header.frame_id = static_cast<std::string>(p["frame_id"]);
+		}
+
+		return success;
+	}
+};
+
+class CollisionObjectDetails: public StructParamLoader
+{
+public:
+	CollisionObjectDetails()
+	{
+
+		// list of fields in array
+		field_names_ = list_of("id")
+				("frame_id")
+				("link_name")
+				("shape_type")
+				("x")
+				("y")
+				("z")
+				("rx")
+				("ry")
+				("rz")
+				("l")
+				("w")
+				("h");
+	}
+
+
+	bool load_parameters(std::string param_name,moveit_msgs::CollisionObject &cobj,std::string ns="")
+	{
+		XmlRpc::XmlRpcValue p;
+		return load_parameters(param_name,cobj,p,ns);
+	}
+
+	bool load_parameters(std::string param_name,moveit_msgs::CollisionObject &cobj,XmlRpc::XmlRpcValue &p,std::string ns="")
+	{
+
+		// parsing parameter structure
+		bool success = StructParamLoader::load_parameters(param_name,p,ns);
+		if(success)
+		{
+			// creating pose
+			tf::Transform t;
+			double x,y,z,rx,ry,rz;
+			geometry_msgs::Pose pose;
+
+			x = static_cast<double>(p["x"]);
+			y = static_cast<double>(p["y"]);
+			z = static_cast<double>(p["z"]);
+			rx = static_cast<double>(p["rx"]);
+			ry = static_cast<double>(p["ry"]);
+			rz = static_cast<double>(p["rz"]);
+
+			t.setOrigin(tf::Vector3(x,y,z));
+			t.getBasis().setRPY(rx,ry,rz);
+			tf::poseTFToMsg(t,pose);
+
+			// creating shape
+			shape_msgs::SolidPrimitive shape;
+			shape.type = shape_msgs::SolidPrimitive::BOX; // ignoring shape type entry for now
 			shape.dimensions.resize(3);
-			shape.dimensions[0] = size_.getX();shape.dimensions[1] = size_.getY();shape.dimensions[2] = size_.getZ();
+			shape.dimensions[0] = static_cast<double>(p["l"]);
+			shape.dimensions[1] = static_cast<double>(p["w"]);
+			shape.dimensions[2] = static_cast<double>(p["h"]);
 
 			// filling collision object members
-			collision_obj_.primitives.clear();
-			collision_obj_.primitive_poses.clear();
-			collision_obj_.primitives.push_back(shape);
-			collision_obj_.primitive_poses.push_back(pose_);
-			collision_obj_.header.frame_id = frame_id_;
-			collision_obj_.id = id_;
+			cobj.primitives.clear();
+			cobj.primitive_poses.clear();
+			cobj.primitives.push_back(shape);
+			cobj.primitive_poses.push_back(pose);
+			cobj.header.frame_id = static_cast<std::string>(p["frame_id"]);
+			cobj.id = static_cast<std::string>(p["id"]);
 
-			// filling attached object members
-			attached_obj_.link_name = link_name_;
-			attached_obj_.object = collision_obj_;
-			attached_obj_.object.header.frame_id = link_name_;
 		}
 
 		return success;
 	}
 
-	void get_collision_object(moveit_msgs::CollisionObject &obj)
+	bool load_parameters(std::string param_name,moveit_msgs::AttachedCollisionObject& att_obj,std::string ns="")
 	{
-		obj = collision_obj_;
+		XmlRpc::XmlRpcValue p;
+		bool success = load_parameters(param_name,att_obj.object,p,ns);
+		if(success)
+		{
+			att_obj.link_name = static_cast<std::string>(p["link_name"]);
+		}
+
+		return success;
 	}
 
-	void get_attached_object(moveit_msgs::AttachedCollisionObject &obj)
-	{
-		obj = attached_obj_;
-	}
-
-protected:
-
-	moveit_msgs::CollisionObject collision_obj_;
-	moveit_msgs::AttachedCollisionObject attached_obj_;
 };
 
 class PlanningSceneTest
@@ -235,7 +297,7 @@ protected:
 	{
 		ros::NodeHandle nh;
 
-		if(fetch_parameters())
+		if(load_parameters())
 		{
 			ROS_INFO_STREAM("parameters were read successfully");
 		}
@@ -245,16 +307,25 @@ protected:
 			return false;
 		}
 
+		// messages
+		collision_obj_.operation = moveit_msgs::CollisionObject::REMOVE;
+		attached_obj_.object.operation = moveit_msgs::CollisionObject::REMOVE;
+
 		// ros publishers
 		planning_scene_diff_pub_ = nh.advertise<moveit_msgs::PlanningScene>(PLANNING_SCENE_DIFF_TOPIC,1);
 		collision_object_pub_ = nh.advertise<moveit_msgs::CollisionObject>(COLLISION_OBJECT_TOPIC,1);
 		attached_object_pub_ = nh.advertise<moveit_msgs::AttachedCollisionObject>(ATTACHED_COLLISION_OBJECT_TOPIC,1);
+		tcp_pose_pub_ = nh.advertise<geometry_msgs::PoseStamped>(TCP_POSE_TOPIC_,1);
+
+		// ros timers
+		timer_ = nh.createTimer(ros::Duration(0.5f),&PlanningSceneTest::timer_callback,this);
 
 		// setting up planning scene diff message
 		planning_scene_msgs_.is_diff = true;
 
 		// setting up move group interface
 		move_group_ptr_ = boost::shared_ptr<move_group_interface::MoveGroup>(new move_group_interface::MoveGroup(arm_group_name_));
+		move_group_ptr_->setPlanningTime(60.0f);
 
 		// waiting for topics
 		while(planning_scene_diff_pub_.getNumSubscribers() == 0 || collision_object_pub_.getNumSubscribers() == 0 ||
@@ -267,7 +338,26 @@ protected:
 		return true;
 	}
 
-	bool fetch_parameters()
+	void timer_callback(const ros::TimerEvent& e)
+	{
+		update_parameters();
+
+		// publishing target pose
+		tcp_pose_pub_.publish(tcp_pose_);
+
+		// updating planning scene objects
+		if(collision_obj_.operation == moveit_msgs::CollisionObject::ADD)
+		{
+			collision_object_pub_.publish(collision_obj_);
+		}
+
+		if(attached_obj_.object.operation == moveit_msgs::CollisionObject::ADD)
+		{
+			attached_object_pub_.publish(attached_obj_);
+		}
+	}
+
+	bool load_parameters()
 	{
 		ros::NodeHandle nh("~");
 
@@ -277,18 +367,9 @@ protected:
 
 	bool update_parameters()
 	{
-		if(collision_obj_details_.fetch_parameters(COLLISION_OBJECT_PARAM) &&
-				attached_obj_details_.fetch_parameters(ATTACHED_OBJECT_PARAM))
-		{
-			collision_obj_details_.get_collision_object(collision_obj_);
-			attached_obj_details_.get_attached_object(attached_obj_);
-		}
-		else
-		{
-			return false;
-		}
-
-		return true;
+		return collision_obj_details_.load_parameters(COLLISION_OBJECT_PARAM,collision_obj_,"~") &&
+				collision_obj_details_.load_parameters(ATTACHED_OBJECT_PARAM,attached_obj_,"~") &&
+				pose_details_.load_parameters(TCP_TARGET_PARAM,tcp_pose_,"~");
 	}
 
 	bool process_command(int command)
@@ -298,31 +379,41 @@ protected:
 		planning_scene_msgs_.world.collision_objects.clear();
 		planning_scene_msgs_.robot_state.attached_collision_objects.clear();
 
+		// plan structure
+		move_group_interface::MoveGroup::Plan plan;
+
+
 		switch(command)
 		{
 		case command_flags::ADD_COLLISION_OBJECT:
 
 			collision_obj_.operation = moveit_msgs::CollisionObject::ADD;
 			collision_object_pub_.publish(collision_obj_);
+
 			break;
-		case command_flags::ATTACHED_OBJECT_TO_TCP:
+		case command_flags::ATTACH_TO_TCP:
 
 			attached_obj_.object.operation = moveit_msgs::CollisionObject::ADD;
 			attached_object_pub_.publish(attached_obj_);
 			break;
-		case command_flags::UPDATE_COLLISION_OBJECT:
+		case command_flags::DETACH_FROM_TCP_AND_REMOVE:
 
-			collision_object_pub_.publish(collision_obj_);
+			attached_obj_.object.operation = moveit_msgs::CollisionObject::REMOVE;
+			attached_object_pub_.publish(attached_obj_);
+			ros::Duration(0.5f).sleep();
+			collision_object_pub_.publish(attached_obj_.object);
 			break;
 		case command_flags::REMOVE_COLLISION_OBJECT:
 
 			collision_obj_.operation = moveit_msgs::CollisionObject::REMOVE;
 			collision_object_pub_.publish(collision_obj_);
 			break;
-		case command_flags::DETACH_OBJECT_FROM_TCP:
+		case command_flags::DETACH_FROM_TCP:
 
 			attached_obj_.object.operation = moveit_msgs::CollisionObject::REMOVE;
 			attached_object_pub_.publish(attached_obj_);
+
+
 			break;
 		case command_flags::ADD_OBJECT_TO_PLANNING_SCENE:
 
@@ -338,12 +429,11 @@ protected:
 			planning_scene_msgs_.robot_state.attached_collision_objects.push_back(attached_obj_);
 			planning_scene_diff_pub_.publish(planning_scene_msgs_);
 			break;
-		case command_flags::UPDATE_OBJECT_IN_PLANNING_SCENE:
+		case command_flags::DETACH_FROM_TCP_AND_REMOVE_IN_PLANNING_SCENE:
 
-			collision_obj_.operation = moveit_msgs::CollisionObject::REMOVE; // removing first
-			planning_scene_msgs_.world.collision_objects.push_back(collision_obj_);
-			collision_obj_.operation = moveit_msgs::CollisionObject::ADD; // adding same object with different properties
-			planning_scene_msgs_.world.collision_objects.push_back(collision_obj_);
+			attached_obj_.object.operation = moveit_msgs::CollisionObject::REMOVE;
+			planning_scene_msgs_.robot_state.attached_collision_objects.push_back(attached_obj_);
+			planning_scene_msgs_.world.collision_objects.push_back(attached_obj_.object);
 			planning_scene_diff_pub_.publish(planning_scene_msgs_);
 			break;
 		case command_flags::REMOVE_OBJECT_FROM_PLANNING_SCENE:
@@ -373,6 +463,37 @@ protected:
 			}
 			break;
 
+		case command_flags::MOVE_ARM_TO_TCP_TARGET:
+
+			move_group_ptr_->setEndEffectorLink(tcp_link_name_);
+			move_group_ptr_->clearPoseTargets();
+			if(move_group_ptr_->setPoseTarget(tcp_pose_,tcp_link_name_) && move_group_ptr_->move())
+			{
+				ROS_INFO_STREAM("Moved tcp to target :\n"<<tcp_pose_);
+			}
+			else
+			{
+				ROS_ERROR_STREAM("Moved tcp to target error :\n"<<tcp_pose_);
+			}
+
+			break;
+
+		case command_flags::MOVE_ARM_TO_TARGET_PREVIEW:
+
+			move_group_ptr_->setEndEffectorLink(tcp_link_name_);
+			move_group_ptr_->clearPoseTargets();
+			if(move_group_ptr_->setPoseTarget(tcp_pose_,tcp_link_name_) && move_group_ptr_->plan(plan))
+			{
+				ROS_INFO_STREAM("Plan to tcp to target succeeded:\n"<<tcp_pose_);
+			}
+			else
+			{
+				ROS_ERROR_STREAM("Plan to tcp to target error :\n"<<tcp_pose_);
+			}
+
+			ROS_WARN_STREAM("This option is not implemented yet");
+			break;
+
 		case command_flags::EXIT:
 			return false;
 
@@ -393,6 +514,9 @@ protected:
 	ros::Publisher planning_scene_diff_pub_;
 	ros::Publisher attached_object_pub_;
 	ros::Publisher collision_object_pub_;
+	ros::Publisher tcp_pose_pub_;
+
+	ros::Timer timer_;
 
 	// move groups interface
 	boost::shared_ptr<move_group_interface::MoveGroup> move_group_ptr_;
@@ -405,13 +529,12 @@ protected:
 	moveit_msgs::CollisionObject collision_obj_;
 
 	// ros parameters
+	geometry_msgs::PoseStamped tcp_pose_;
+	PoseTargetDetails pose_details_;
 	CollisionObjectDetails collision_obj_details_;
-	CollisionObjectDetails attached_obj_details_;
-//	std::string world_frame_id_;
 	std::string arm_group_name_;
 	std::string tcp_link_name_;
-//	tf::Vector3 box_position_in_world_;
-//	double box_side_length_;
+
 
 };
 
