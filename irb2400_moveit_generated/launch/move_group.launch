@@ -1,3 +1,4 @@
+<?xml version="1.0" ?>
 <launch>
 
   <include file="$(find irb2400_moveit_generated)/launch/planning_context.launch" />

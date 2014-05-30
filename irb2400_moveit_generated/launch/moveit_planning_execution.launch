@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+
+	<arg name="rviz" default="true"/>
+
+
+ # The planning and execution components of MoveIt! configured to run
+ # using a simulated ROS-Industrial node
+
+ #-------------------------------------
+ # These actions are normally handled in the "real" robot's bringup launch file
+ #
+ # load the URDF
+ <param name="robot_description" textfile="$(find urdf_example)/urdf/irb2400_navigation_environment.urdf"/>
+
+	<rosparam param="controller_joint_names">['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6']</rosparam>
+
+ # run the robot simulator and action interface nodes
+ <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch" />
+
+ # publish the robot state (tf transforms)
+ <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+ #-------------------------------------
+
+  <include file="$(find irb2400_moveit_generated)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="publish_monitored_planning_scene" value="true"/>
+  </include>
+
+ 	<include if="$(arg rviz)" file="$(find irb2400_moveit_generated)/launch/moveit_rviz.launch"/>
+</launch>
