@@ -21,7 +21,7 @@
 #include <moveit_msgs/PlanningScene.h>
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <moveit_msgs/GetStateValidity.h>
-#include <moveit_msgs/DisplayRobotState.h>
+#include <moveit_msgs/DisplayTrajectory.h>
 
 // boost
 #include <boost/assign.hpp>
@@ -29,6 +29,7 @@
 #include <boost/assign/list_of.hpp>
 
 // topics
+static const std::string MOTION_PLAN_PREVIEW = "motion_plan_preview";
 static const std::string ATTACHED_COLLISION_OBJECT_TOPIC = "attached_collision_object";
 static const std::string COLLISION_OBJECT_TOPIC = "collision_object";
 static const std::string PLANNING_SCENE_DIFF_TOPIC = "planning_scene";
@@ -296,6 +297,7 @@ protected:
 	virtual bool setup()
 	{
 		ros::NodeHandle nh;
+		ros::NodeHandle ph("~");
 
 		if(load_parameters())
 		{
@@ -316,6 +318,7 @@ protected:
 		collision_object_pub_ = nh.advertise<moveit_msgs::CollisionObject>(COLLISION_OBJECT_TOPIC,1);
 		attached_object_pub_ = nh.advertise<moveit_msgs::AttachedCollisionObject>(ATTACHED_COLLISION_OBJECT_TOPIC,1);
 		tcp_pose_pub_ = nh.advertise<geometry_msgs::PoseStamped>(TCP_POSE_TOPIC_,1);
+		motion_plan_preview_pub_ = ph.advertise<moveit_msgs::DisplayTrajectory>(MOTION_PLAN_PREVIEW,1);
 
 		// ros timers
 		timer_ = nh.createTimer(ros::Duration(0.5f),&PlanningSceneTest::timer_callback,this);
@@ -484,6 +487,12 @@ protected:
 			move_group_ptr_->clearPoseTargets();
 			if(move_group_ptr_->setPoseTarget(tcp_pose_,tcp_link_name_) && move_group_ptr_->plan(plan))
 			{
+
+				display_traj_.trajectory_start = plan.start_state_;
+				display_traj_.trajectory.clear();
+				display_traj_.trajectory.push_back( plan.trajectory_);
+				display_traj_.model_id = move_group_ptr_->getName();
+				motion_plan_preview_pub_.publish(display_traj_);
 				ROS_INFO_STREAM("Plan to tcp to target succeeded:\n"<<tcp_pose_);
 			}
 			else
@@ -491,7 +500,6 @@ protected:
 				ROS_ERROR_STREAM("Plan to tcp to target error :\n"<<tcp_pose_);
 			}
 
-			ROS_WARN_STREAM("This option is not implemented yet");
 			break;
 
 		case command_flags::EXIT:
@@ -515,6 +523,7 @@ protected:
 	ros::Publisher attached_object_pub_;
 	ros::Publisher collision_object_pub_;
 	ros::Publisher tcp_pose_pub_;
+	ros::Publisher motion_plan_preview_pub_;
 
 	ros::Timer timer_;
 
@@ -527,6 +536,7 @@ protected:
 	// messages
 	moveit_msgs::AttachedCollisionObject attached_obj_;
 	moveit_msgs::CollisionObject collision_obj_;
+	moveit_msgs::DisplayTrajectory display_traj_;
 
 	// ros parameters
 	geometry_msgs::PoseStamped tcp_pose_;
