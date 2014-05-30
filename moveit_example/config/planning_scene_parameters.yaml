@@ -3,34 +3,34 @@ collision_object_info:
   frame_id: /world_frame
   link_name: "" # not used
   shape_type: 1 # box 
-  size:
-    x: 0.08
-    y: 0.08
-    z: 0.20
-  position:
-    x: 0.0
-    y: 0.0
-    z: 0.10
-  orientation:
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
+  l: 0.08
+  w: 0.08
+  h: 1.0
+  x: 1.0
+  y: 0.2
+  z: 0.5
+  rx: 0.0
+  ry: 0.0
+  rz: 0.0
 attached_object_info:
   id: attached_obj
   frame_id: gripper_palm
   link_name: gripper_palm 
   shape_type: 1 # box 
-  size:
-    x: 0.08
-    y: 0.08
-    z: 0.08
-  position:
-    x: 0.0
-    y: 0.0
-    z: 0.02
-  orientation:
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
+  l: 0.2
+  w: 0.24
+  h: 0.2
+  x: 0.0
+  y: 0.0
+  z: 0.1
+  rx: 0.0
+  ry: 0.0
+  rz: 0.0
+tcp_target_info:
+  frame_id: world_frame
+  x: 1.0
+  y: 0.6
+  z: 0.2
+  rx: 3.14
+  ry: 0.0
+  rz: 3.14
