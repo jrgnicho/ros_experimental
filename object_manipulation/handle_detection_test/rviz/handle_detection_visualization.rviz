@@ -82,21 +82,21 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /localization/visualization_all_affordances
-      Name: MarkerArray
-      Namespaces:
-        cylinders_ns: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
       Enabled: false
-      Marker Topic: /localization/visualization_all_handles
+      Marker Topic: /localization/visualization_all_affordances
       Name: MarkerArray
       Namespaces:
         {}
       Queue Size: 100
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /localization/visualization_all_handles
+      Name: MarkerArray
+      Namespaces:
+        cylinders_ns: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
