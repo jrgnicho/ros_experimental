@@ -5,7 +5,7 @@
 		Creates a window of specified dimensions using boxes
 	</description>
 
-	<include filename="$(find urdf_example)/urdf/color_pallet_macro.xacro"/>
+	<xacro:include filename="$(find urdf_example)/urdf/color_pallet_macro.xacro"/>
 
 	<!-- macro list -->
 	<xacro:macro name="window_link_component" params="name parent_link length width depth px py *viz_material *col_material">
