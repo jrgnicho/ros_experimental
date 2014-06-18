@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find libviz_example)/rviz/test_panel_plugin.rviz"
-		launch-prefix="xterm -e gdb --args"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find libviz_example)/rviz/test_panel_plugin.rviz"/>
 </launch>
