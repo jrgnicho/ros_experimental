@@ -4,7 +4,7 @@ project(libviz_example)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS  interactive_markers genmsg tf roscpp rospy rviz visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS  interactive_markers genmsg tf roscpp rospy rviz visualization_msgs moveit_msgs)
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 # QT setup
@@ -16,7 +16,8 @@ add_definitions(-DQT_NO_KEYWORDS)
 qt4_wrap_cpp(MOC_FILES  
 	include/libviz_example/widgets/RvizGrid.h
 	include/libviz_example/panels/TestRvizPanel.h
-	include/libviz_example/panels/help_panel.h) 
+	include/libviz_example/panels/help_panel.h
+	include/libviz_example/displays/motion_display.h) 
 #set(SOURCE_FILES
 #  src/widgets/RvizGrid.cpp
 #  src/nodes/rviz_adjustable_grid_node.cpp
@@ -27,20 +28,13 @@ qt4_wrap_cpp(MOC_FILES
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/groovy/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
-
-
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS interactive_markers tf roscpp rospy rviz visualization_msgs 
+   CATKIN_DEPENDS interactive_markers tf roscpp rospy rviz visualization_msgs moveit_msgs
 )
 
 ###########
@@ -61,6 +55,7 @@ add_library(${PROJECT_NAME}
 	src/interactive_marker_servers/PolygonInteractiveMarkerServer.cpp
 	src/panels/TestRvizPanel.cpp
 	src/panels/help_panel.cpp
+	src/displays/motion_display.cpp
 	${MOC_FILES}) 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES})
 

@@ -21,12 +21,14 @@
   <build_depend>tf</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>roscpp</build_depend>
+	<build_depend>moveit_msgs</build_depend>
   <run_depend>rviz</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>interactive_markers</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
+	<run_depend>moveit_msgs</run_depend>
 
 
   <export>

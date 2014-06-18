@@ -14,4 +14,11 @@
       rviz help panel replica
     </description>
   </class>
+	<class name="libviz_example/MotionDisplay"
+         type="libviz_example::displays::MotionDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Display for showing motion plan preview.
+    </description>
+	</class>
 </library>
