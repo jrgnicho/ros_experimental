@@ -56,24 +56,29 @@ void TestRvizPanel::onInitialize()
 
 	// creating top button-text entry layout
 	ROS_INFO_STREAM("Creating submenu 1 elements");
-//	QHBoxLayout* sub_layout1  = new QHBoxLayout(this);
-//	sub_layout1->addWidget(new QLabel("Edit Test"));
-//	line_edit_ = new QLineEdit();
-//	line_edit_->insert(QString::fromStdString(text_entered_));
-//	button_ = new QPushButton(QString("confirm"));
-//	sub_layout1->addWidget(line_edit_);
-//	sub_layout1->addWidget(button_);
+
+	QWidget *widget1 = new QWidget();
+	QHBoxLayout* sub_layout1  = new QHBoxLayout(this);
+	sub_layout1->addWidget(new QLabel("Edit Test"));
+	line_edit_ = new QLineEdit();
+	line_edit_->insert(QString::fromStdString(text_entered_));
+	button_ = new QPushButton(QString("confirm"));
+	sub_layout1->addWidget(line_edit_);
+	sub_layout1->addWidget(button_);
+	widget1->setLayout(sub_layout1);
 
 
 	// creating spinner elements
 	ROS_INFO_STREAM("Creating submenu 2 elements");
-//	QHBoxLayout* sub_layout2 = new QHBoxLayout(this);
-//	sub_layout2->addWidget(new QLabel("spinner"));
-//	spin_box_ = new QDoubleSpinBox();
-//	spin_box_->setMinimum(0.0f);
-//	spin_box_->setMaximum(1.0f);
-//	spin_box_->setSingleStep(0.1f);
-//	sub_layout2->addWidget(spin_box_);
+	QWidget *widget2 = new QWidget();
+	QHBoxLayout* sub_layout2 = new QHBoxLayout(this);
+	sub_layout2->addWidget(new QLabel("spinner"));
+	spin_box_ = new QDoubleSpinBox();
+	spin_box_->setMinimum(0.0f);
+	spin_box_->setMaximum(1.0f);
+	spin_box_->setSingleStep(0.1f);
+	sub_layout2->addWidget(spin_box_);
+	widget2->setLayout(sub_layout2);
 
 
 	// creating slider elements
@@ -84,26 +89,27 @@ void TestRvizPanel::onInitialize()
 	slider_ = new QSlider(Qt::Horizontal);
 	slider_->setMinimum(1);
 	slider_->setMaximum(100);
-	//slider_->setTickInterval(10);
-	//slider_->setSingleStep(1);
+	slider_->setTickInterval(10);
+	slider_->setSingleStep(1);
 	sub_layout3->addWidget(slider_);
 	test_widget_->setLayout(sub_layout3);
 
 	// creating main layout
 	QVBoxLayout* main_layout = new QVBoxLayout(this);
 	main_layout->addWidget(new QLabel("TestRvizPanel"));
-	//main_layout->addLayout(sub_layout1);
+	main_layout->addWidget(widget1);
+	main_layout->addWidget(widget2);
 	main_layout->addWidget(test_widget_);
 
 	ROS_INFO_STREAM("Adding elements to main layout");
-	//setLayout(main_layout);
+	setLayout(main_layout);
 
 	ROS_INFO_STREAM("Connecting signals to slots");
-//	connect(line_edit_,SIGNAL(textEdited(const QString&)),
-//			this,SLOT(text_edited_handler(const QString& )));
-//	connect(button_,SIGNAL(clicked()),this,SLOT(button_handler()));
-//	connect(spin_box_,SIGNAL(valueChanged(double)),this,SLOT(spinner_handler(double)));
-//	connect(slider_,SIGNAL(valueChanged(int)),this,SLOT(slider_handler(int)));
+	connect(line_edit_,SIGNAL(textEdited(const QString&)),
+			this,SLOT(text_edited_handler(const QString& )));
+	connect(button_,SIGNAL(clicked()),this,SLOT(button_handler()));
+	connect(spin_box_,SIGNAL(valueChanged(double)),this,SLOT(spinner_handler(double)));
+	connect(slider_,SIGNAL(valueChanged(int)),this,SLOT(slider_handler(int)));
 
 	ROS_INFO_STREAM("Connected signals to slots. Finished on initialized");
 }
