@@ -4,7 +4,7 @@ project(libviz_example)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS  interactive_markers genmsg tf roscpp rospy rviz visualization_msgs moveit_msgs)
+find_package(catkin REQUIRED COMPONENTS  interactive_markers rviz genmsg tf roscpp rospy rviz visualization_msgs moveit_msgs moveit_ros_planning_interface moveit_ros_visualization)
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 # QT setup
@@ -34,7 +34,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS interactive_markers tf roscpp rospy rviz visualization_msgs moveit_msgs
+   CATKIN_DEPENDS interactive_markers rviz tf roscpp rospy rviz visualization_msgs moveit_msgs moveit_ros_planning_interface moveit_ros_visualization
 )
 
 ###########
