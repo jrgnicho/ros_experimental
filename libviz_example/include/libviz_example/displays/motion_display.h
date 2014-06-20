@@ -19,6 +19,11 @@
 #include <rviz/selection/selection_manager.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit/rviz_plugin_render_tools/robot_state_visualization.h>
+#include <moveit/rviz_plugin_render_tools/planning_scene_render.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/robot_trajectory/robot_trajectory.h>
+#include <moveit/planning_scene/planning_scene.h>
 
 
 namespace libviz_example{ namespace displays{
@@ -36,18 +41,31 @@ public:
 
 protected:
 
+	// overrides from Display
+	virtual void onInitialize();
+	virtual void onEnable();
+	virtual void onDisable();
+	virtual void fixedFrameChanged();
+
 	virtual void process_message_callback(const moveit_msgs::DisplayTrajectory::ConstPtr &msg);
+
+
 
 protected Q_SLOTS:
 
-	void update_topic_property();
+	void update_topic_handler();
+	void update_robot_alpha_handler();
+	void animate_robot_trajectory_handler();
+	void load_robot_model_handler();
+
+Q_SIGNALS:
+	void animate_robot_trajectory();
 
 protected:
 
 	ros::NodeHandle nh_;
 	ros::Subscriber display_traj_subs_;
 
-	moveit_rviz_plugin::RobotStateVisualizationPtr display_robot_traj_ptr_;
 
 	// display properties
 	rviz::Property* display_motion_category_;
@@ -55,6 +73,20 @@ protected:
 	rviz::StringProperty* robot_description_property_;
 	rviz::FloatProperty* robot_alpha_property_;
 	rviz::FloatProperty* display_time_property_;
+
+	// scene components
+	Ogre::SceneNode* planning_scene_node_ptr_;
+	robot_model::RobotModelPtr robot_model_ptr_;
+	planning_scene::PlanningScenePtr planning_scene_ptr_;
+	moveit_rviz_plugin::PlanningSceneRenderPtr planning_scene_render_ptr_;
+	rviz::Color attached_color;
+	rviz::Color environment_color;
+
+	// motion plan animation
+	int way_point_index_;
+	float way_point_time_step_;
+	robot_trajectory::RobotTrajectoryPtr robot_traj_ptr_;
+	moveit_rviz_plugin::RobotStateVisualizationPtr display_robot_traj_ptr_;
 };
 
 }}
