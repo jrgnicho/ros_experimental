@@ -1,4 +1,3 @@
-ros_examples_metapackage
+ros_experimental
 ========================
-
-catkin meta-package which contains various example applications intended to demonstrate several ros/ros-industrial capabilities
+Contains various applications intended to demonstrate/exercise/enhance several ros/ros-industrial capabilities.
